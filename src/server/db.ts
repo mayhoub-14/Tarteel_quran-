@@ -577,6 +577,16 @@ class Database {
   /** Wait until the first authoritative Firestore inspection has completed. */
   public async waitForInitialization(): Promise<void> {
     await this.initPromise;
+
+    // On Vercel, the in-memory seed is never a valid fallback for production
+    // requests. If Firestore could not be authoritatively read or initialized,
+    // fail closed instead of exposing demo data or accepting writes that cannot
+    // be durably committed to the real database.
+    if (process.env.VERCEL === '1' && (!this.isFirestoreConnected || this.isSyncBlocked)) {
+      throw new Error(
+        this.syncBlockReason || 'Firestore is not connected; refusing to serve application data.'
+      );
+    }
   }
 
   public get(): DatabaseSchema {
