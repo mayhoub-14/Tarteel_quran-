@@ -18,9 +18,15 @@ import { checkLessonOverlap, checkTwoLessonsConflict, getCairoToday, getCairoCur
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const JWT_SECRET: string = (() => {
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim() !== '') {
-    return process.env.JWT_SECRET.trim();
+  const configuredSecret = process.env.JWT_SECRET?.trim();
+  if (configuredSecret && configuredSecret.length >= 32) return configuredSecret;
+
+  // Serverless instances must never generate independent in-memory signing keys:
+  // requests can land on different instances and invalidate otherwise valid sessions.
+  if (process.env.VERCEL === '1') {
+    throw new Error('[Security] JWT_SECRET is required on Vercel and must contain at least 32 characters.');
   }
+
   const secretFile = path.resolve(process.cwd(), 'data', '.jwt_secret');
   try {
     if (fs.existsSync(secretFile)) {
@@ -31,9 +37,8 @@ const JWT_SECRET: string = (() => {
     fs.mkdirSync(path.dirname(secretFile), { recursive: true });
     fs.writeFileSync(secretFile, generated, { encoding: 'utf8', mode: 0o600 });
     return generated;
-  } catch (err) {
-    console.warn('[Security] Could not persist runtime JWT secret, using in-memory cryptographic secret');
-    return crypto.randomBytes(64).toString('hex');
+  } catch {
+    throw new Error('[Security] Could not load or persist the local JWT secret.');
   }
 })();
 
@@ -115,10 +120,15 @@ function authenticate(req: AuthenticatedRequest, res: Response, next: NextFuncti
   }
 }
 
-// Require Approved Teacher or Admin
+// Require an explicitly active teacher or administrator. Do not treat unknown
+// roles or missing/legacy status values as approved accounts.
 function requireApproved(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ error: 'غير مصرح' });
+  }
+
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'TEACHER') {
+    return res.status(403).json({ error: 'نوع الحساب غير مسموح له باستخدام هذه الخدمة.' });
   }
 
   if (req.user.status === 'PENDING') {
@@ -126,6 +136,10 @@ function requireApproved(req: AuthenticatedRequest, res: Response, next: NextFun
       error: 'حسابك قيد المراجعة والاعتماد من قبل إدارة أكاديمية ترتيل. لا يمكنك الوصول إلى بيانات الطلاب أو الجداول حتى يتم اعتماده.',
       status: 'PENDING'
     });
+  }
+
+  if (req.user.status !== 'ACTIVE') {
+    return res.status(403).json({ error: 'الحساب غير نشط. يرجى التواصل مع إدارة الأكاديمية.' });
   }
 
   next();
@@ -262,10 +276,13 @@ app.post('/api/auth/firebase-login', async (req: Request, res: Response) => {
 
   // 3. Extract verified identity strictly from the cryptographically validated token
   const verifiedEmail = verifiedToken.email ? String(verifiedToken.email).trim().toLowerCase() : null;
-  const verifiedUid = verifiedToken.uid;
 
   if (!verifiedEmail) {
     return res.status(400).json({ error: 'رمز الدخول الموثق لا يحتوي على بريد إلكتروني صالح' });
+  }
+
+  if (verifiedToken.email_verified !== true) {
+    return res.status(403).json({ error: 'يجب تأكيد البريد الإلكتروني في حساب Google قبل تسجيل الدخول.' });
   }
 
   // 4. Match with existing server-side profile (Never trust client-supplied roles or emails)
@@ -427,107 +444,19 @@ app.post('/api/auth/change-password', authenticate, (req: AuthenticatedRequest, 
 });
 
 // Request secure one-time password reset/setup link
-app.post('/api/auth/request-password-reset', (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email || typeof email !== 'string') {
-    return res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
-  }
-
-  const cleanEmail = email.trim().toLowerCase();
-  const profileIndex = db.get().profiles.findIndex(p => p.email.toLowerCase() === cleanEmail);
-
-  // Constant-time mitigation / prevent email enumeration
-  if (profileIndex === -1) {
-    return res.json({
-      message: 'إذا كان البريد الإلكتروني مسجلاً، فقد تم إصدار رابط تعيين كلمة المرور بنجاح.'
-    });
-  }
-
-  const profile = db.get().profiles[profileIndex];
-
-  // Generate a cryptographically secure 256-bit random token
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  // Store a SHA-256 hash of the token in the database for security (token at rest protection)
-  const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-  // 1-hour expiration
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-
-  profile.passwordResetToken = tokenHash;
-  profile.passwordResetExpires = expiresAt;
-  profile.updatedAt = new Date().toISOString();
-  db.recordChange('profiles', profile.id, profile);
-  db.save();
-
-  logAudit(
-    profile,
-    'REQUEST_PASSWORD_RESET',
-    'USER',
-    profile.id,
-    `طلب رابط آمن لتعيين كلمة المرور لحساب (${profile.email})`
-  );
-
-  return res.json({
-    message: 'إذا كان البريد الإلكتروني مسجلاً، فقد تم إصدار رابط تعيين كلمة المرور بنجاح.',
-    // Provide the reset token in response for one-time initialization/setup
-    setupToken: resetToken,
-    expiresAt
+app.post('/api/auth/request-password-reset', (_req: Request, res: Response) => {
+  // Never return reset tokens from an unauthenticated API response. This project
+  // does not yet have a verified outbound email provider configured to deliver
+  // one-time links to the account owner.
+  return res.status(503).json({
+    error: 'استعادة كلمة المرور عبر البريد غير مفعّلة حاليًا. تواصل مع إدارة الأكاديمية لإتمام الاستعادة بأمان.'
   });
 });
 
-// Verify token and set new password securely
-app.post('/api/auth/setup-password', (req: Request, res: Response) => {
-  const { token, newPassword, confirmPassword } = req.body;
-
-  if (!token || typeof token !== 'string') {
-    return res.status(400).json({ error: 'رمز تعيين كلمة المرور غير صالح أو مفقود' });
-  }
-
-  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
-    return res.status(400).json({ error: 'يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف وأرقام لضمان الأمان' });
-  }
-
-  if (newPassword !== confirmPassword) {
-    return res.status(400).json({ error: 'كلمة المرور وتأكيدها غير متطابقين' });
-  }
-
-  const incomingHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
-  const now = new Date().toISOString();
-
-  // Find user with matching unexpired token
-  const profileIndex = db.get().profiles.findIndex(p =>
-    p.passwordResetToken === incomingHash &&
-    p.passwordResetExpires &&
-    p.passwordResetExpires > now
-  );
-
-  if (profileIndex === -1) {
-    return res.status(400).json({ error: 'رابط تعيين كلمة المرور غير صالح أو انتهت صلاحيته. يرجى طلب رابط جديد.' });
-  }
-
-  const profile = db.get().profiles[profileIndex];
-
-  // Hash password using bcrypt with standard high-workfactor 10 rounds and unique salt
-  const salt = bcrypt.genSaltSync(10);
-  profile.passwordHash = bcrypt.hashSync(newPassword, salt);
-
-  // Invalidate the one-time token immediately upon consumption
-  delete profile.passwordResetToken;
-  delete profile.passwordResetExpires;
-  profile.updatedAt = new Date().toISOString();
-
-  db.recordChange('profiles', profile.id, profile);
-  db.save();
-
-  logAudit(
-    profile,
-    'PASSWORD_RESET_COMPLETED',
-    'USER',
-    profile.id,
-    `تم إتمام تعيين كلمة المرور بنجاح وبشكل آمن للحساب (${profile.email})`
-  );
-
-  return res.json({
-    message: 'تم تعيين كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول مباشرة ببياناتك الجديدة.'
+// Password reset cannot be completed until a verified email delivery provider is configured.
+app.post('/api/auth/setup-password', (_req: Request, res: Response) => {
+  return res.status(503).json({
+    error: 'إعادة تعيين كلمة المرور غير مفعّلة حاليًا. تواصل مع إدارة الأكاديمية لإتمام الاستعادة بأمان.'
   });
 });
 
@@ -672,7 +601,7 @@ app.post('/api/students', authenticate, requireApproved, (req: AuthenticatedRequ
 });
 
 // Update student
-app.put('/api/students/:id', authenticate, requireApproved, (req: AuthenticatedRequest, res: Response) => {
+app.put('/api/students/:id', authenticate, requireApproved, async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { fullName, country, timeZone, durationMinutes, studyDaysPerWeek, completedEpisodes, lessonSchedules } = req.body;
 
@@ -718,9 +647,16 @@ app.put('/api/students/:id', authenticate, requireApproved, (req: AuthenticatedR
     // Find existing lesson IDs for this student before removing locally
     const oldLessonIds = db.get().lessons.filter(l => l.studentId === id).map(l => l.id);
     if (oldLessonIds.length > 0) {
-      deleteLessonsFromFirestore(oldLessonIds).catch(err => {
-        console.warn(`[Firestore] Failed to delete obsolete lessons for student ${id}:`, err);
-      });
+      try {
+        // Do not acknowledge a schedule replacement while obsolete cloud lessons
+        // may still exist and reappear after the next Firestore reload.
+        await deleteLessonsFromFirestore(oldLessonIds);
+      } catch (error) {
+        console.error(`[Firestore] Failed to delete obsolete lessons for student ${id}:`, error);
+        return res.status(503).json({
+          error: 'تعذر حذف مواعيد الطالب القديمة من قاعدة البيانات. لم يتم استبدال الجدول، حاول مرة أخرى.'
+        });
+      }
     }
 
     // Remove existing lessons for this student
@@ -1605,8 +1541,8 @@ app.post('/api/payroll/submit', authenticate, requireApproved, async (req: Authe
     if (gasResponse && gasResponse.ok) {
       newRequest.emailSent = true;
     } else {
-      newRequest.emailSent = true;
-      newRequest.emailError = gasResponse ? `HTTP ${gasResponse.status}` : 'Stored locally, queued for notification';
+      newRequest.emailSent = false;
+      newRequest.emailError = gasResponse ? `HTTP ${gasResponse.status}` : 'Notification delivery failed';
     }
   } catch (notifyErr: any) {
     console.error('Email notification dispatch error:', notifyErr);
@@ -2294,8 +2230,13 @@ app.get('/api/admin/firestore-status', authenticate, requireAdmin, async (_req: 
 // POST /api/admin/firestore-sync - Admin triggers manual Firestore sync
 app.post('/api/admin/firestore-sync', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await db.syncToFirestore();
-    logAudit(req.user!, 'FIRESTORE_SYNC', 'SETTINGS', 'firestore', 'مزامنة كاملة يدوية مع قاعدة بيانات Firebase Firestore');
+    // Use the request-time sync path so initialization/sync failures are surfaced
+    // to the admin instead of reporting success when a background sync was blocked.
+    await db.saveAndSync();
+    if (db.getPendingChangesCount() > 0) {
+      throw new Error('لا تزال هناك تغييرات معلقة لم يتم تأكيد حفظها في Firestore.');
+    }
+    logAudit(req.user!, 'FIRESTORE_SYNC', 'SETTINGS', 'firestore', 'تم التحقق من اكتمال مزامنة التغييرات المعلقة مع Firebase Firestore');
     return res.json({
       success: true,
       message: 'تمت مزامنة جميع البيانات بنجاح مع Firebase Firestore',
