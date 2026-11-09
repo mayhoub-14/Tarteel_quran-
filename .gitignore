@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+# Runtime database files and local backups must never be committed
+data/database*.json
+backups/*.json
