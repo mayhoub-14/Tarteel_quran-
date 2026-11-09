@@ -592,7 +592,7 @@ app.post('/api/students', authenticate, requireApproved, (req: AuthenticatedRequ
 });
 
 // Update student
-app.put('/api/students/:id', authenticate, requireApproved, (req: AuthenticatedRequest, res: Response) => {
+app.put('/api/students/:id', authenticate, requireApproved, async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { fullName, country, timeZone, durationMinutes, studyDaysPerWeek, completedEpisodes, lessonSchedules } = req.body;
 
@@ -638,9 +638,16 @@ app.put('/api/students/:id', authenticate, requireApproved, (req: AuthenticatedR
     // Find existing lesson IDs for this student before removing locally
     const oldLessonIds = db.get().lessons.filter(l => l.studentId === id).map(l => l.id);
     if (oldLessonIds.length > 0) {
-      deleteLessonsFromFirestore(oldLessonIds).catch(err => {
-        console.warn(`[Firestore] Failed to delete obsolete lessons for student ${id}:`, err);
-      });
+      try {
+        // Do not acknowledge a schedule replacement while obsolete cloud lessons
+        // may still exist and reappear after the next Firestore reload.
+        await deleteLessonsFromFirestore(oldLessonIds);
+      } catch (error) {
+        console.error(`[Firestore] Failed to delete obsolete lessons for student ${id}:`, error);
+        return res.status(503).json({
+          error: 'تعذر حذف مواعيد الطالب القديمة من قاعدة البيانات. لم يتم استبدال الجدول، حاول مرة أخرى.'
+        });
+      }
     }
 
     // Remove existing lessons for this student
@@ -1525,8 +1532,8 @@ app.post('/api/payroll/submit', authenticate, requireApproved, async (req: Authe
     if (gasResponse && gasResponse.ok) {
       newRequest.emailSent = true;
     } else {
-      newRequest.emailSent = true;
-      newRequest.emailError = gasResponse ? `HTTP ${gasResponse.status}` : 'Stored locally, queued for notification';
+      newRequest.emailSent = false;
+      newRequest.emailError = gasResponse ? `HTTP ${gasResponse.status}` : 'Notification delivery failed';
     }
   } catch (notifyErr: any) {
     console.error('Email notification dispatch error:', notifyErr);
