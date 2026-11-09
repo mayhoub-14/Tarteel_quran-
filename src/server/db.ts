@@ -665,7 +665,7 @@ class Database {
       for (const id of previous.keys()) if (!current.has(id)) this.recordDeletion(collection, id);
     }
     if (JSON.stringify(this.lastSnapshot.settings) !== JSON.stringify(this.data.settings)) {
-      this.recordChange('settings', 'system', this.data.settings);
+      this.recordChange('settings', 'global', this.data.settings);
     }
     this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
   }
