@@ -120,10 +120,15 @@ function authenticate(req: AuthenticatedRequest, res: Response, next: NextFuncti
   }
 }
 
-// Require Approved Teacher or Admin
+// Require an explicitly active teacher or administrator. Do not treat unknown
+// roles or missing/legacy status values as approved accounts.
 function requireApproved(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ error: 'غير مصرح' });
+  }
+
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'TEACHER') {
+    return res.status(403).json({ error: 'نوع الحساب غير مسموح له باستخدام هذه الخدمة.' });
   }
 
   if (req.user.status === 'PENDING') {
@@ -131,6 +136,10 @@ function requireApproved(req: AuthenticatedRequest, res: Response, next: NextFun
       error: 'حسابك قيد المراجعة والاعتماد من قبل إدارة أكاديمية ترتيل. لا يمكنك الوصول إلى بيانات الطلاب أو الجداول حتى يتم اعتماده.',
       status: 'PENDING'
     });
+  }
+
+  if (req.user.status !== 'ACTIVE') {
+    return res.status(403).json({ error: 'الحساب غير نشط. يرجى التواصل مع إدارة الأكاديمية.' });
   }
 
   next();
