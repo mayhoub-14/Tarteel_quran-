@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDocs, collection, writeBatch, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDocsFromServer, collection, writeBatch, deleteDoc } from 'firebase/firestore';
 import type { DatabaseSchema } from './db.ts';
 
 const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
@@ -168,7 +168,7 @@ export interface FirestoreStateInspection {
 export async function inspectFirestoreDatabaseState(): Promise<FirestoreStateInspection> {
   try {
     async function getCollectionDocs<T>(colName: string): Promise<T[]> {
-      const snap = await getDocs(collection(firestoreDb, colName));
+      const snap = await getDocsFromServer(collection(firestoreDb, colName));
       return snap.docs.map(d => d.data() as T);
     }
 
@@ -193,7 +193,7 @@ export async function inspectFirestoreDatabaseState(): Promise<FirestoreStateIns
       getCollectionDocs<any>('aiUsageLogs'),
       getCollectionDocs<any>('auditLogs'),
       getCollectionDocs<any>('payrollRequests'),
-      getDocs(collection(firestoreDb, 'settings'))
+      getDocsFromServer(collection(firestoreDb, 'settings'))
     ]);
 
     const counts = {
