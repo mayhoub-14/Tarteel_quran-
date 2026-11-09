@@ -501,8 +501,34 @@ class Database {
 
         case 'EMPTY': {
           // Genuinely new, empty Firestore database: safe to upload current local database
-          console.log('[Firestore] Genuinely empty Firestore database confirmed (0 documents). Running safe initial migration...');
-          await migrateDataToFirestore(this.data);
+          console.log('[Firestore] Server-confirmed empty Firestore database. Bootstrapping only the existing active admin profile and academy settings; test teachers, students, lessons, and logs are intentionally excluded.');
+          const adminProfiles = (this.data.profiles || []).filter(
+            profile => profile.id === 'admin-tarteel-root' &&
+              profile.role === 'ADMIN' &&
+              profile.status === 'ACTIVE'
+          );
+          if (adminProfiles.length !== 1) {
+            this.isFirestoreConnected = false;
+            this.isSyncBlocked = true;
+            this.syncBlockReason = 'Firestore is empty and the expected active root admin profile is unavailable in the local seed. No data was migrated.';
+            console.error('[Firestore Safety Alert] ' + this.syncBlockReason);
+            return;
+          }
+          const bootstrapData: DatabaseSchema = {
+            ...this.data,
+            profiles: adminProfiles,
+            students: [],
+            lessons: [],
+            lessonExceptions: [],
+            certificateTemplates: [],
+            generatedCertificates: [],
+            payrollRequests: [],
+            aiUsageLogs: [],
+            auditLogs: []
+          };
+          await migrateDataToFirestore(bootstrapData);
+          this.data = bootstrapData;
+          this.lastSnapshot = JSON.parse(JSON.stringify(bootstrapData));
           this.isFirestoreConnected = true;
           this.isSyncBlocked = false;
           this.syncBlockReason = null;
@@ -539,6 +565,11 @@ class Database {
     }
   }
 
+  /** Wait until the first authoritative Firestore inspection has completed. */
+  public async waitForInitialization(): Promise<void> {
+    await this.initPromise;
+  }
+
   public get(): DatabaseSchema {
     return this.data;
   }
@@ -562,6 +593,9 @@ class Database {
   private isSyncing = false;
 
   private saveLocal(): void {
+    // Vercel deployment files are immutable. Firestore is the production source
+    // of truth; never attempt to persist mutable state into /var/task.
+    if (process.env.VERCEL === '1') return;
     ensureDataDirectory();
     try {
       const serialized = JSON.stringify(this.data, null, 2);
