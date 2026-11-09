@@ -365,7 +365,7 @@ export async function deleteStudentWithLessonsFromFirestore(
     }
   }
 
-  await batch.commit();
+  await withFirestoreRetry(() => batch.commit(), 'delete student and associated lessons');
 }
 
 /**
@@ -384,7 +384,7 @@ export async function deleteLessonsFromFirestore(lessonIds: string[]): Promise<v
         batch.delete(firestoreDb.collection('lessons').doc(lid));
       }
     }
-    await withFirestoreRetry(() => batch.commit(), 'commit student and lesson deletion');
+    await withFirestoreRetry(() => batch.commit(), 'commit lesson deletion batch');
   }
 }
 
@@ -439,7 +439,7 @@ export async function commitIncrementalChangesToFirestore(
       }
     }
 
-    await withFirestoreRetry(() => batch.commit(), 'commit lesson deletion batch');
+    await withFirestoreRetry(() => batch.commit(), 'commit incremental Firestore batch');
   }
 
   return { written: writtenCount, deleted: deletedCount };
