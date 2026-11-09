@@ -539,6 +539,11 @@ class Database {
     }
   }
 
+  /** Wait until the first authoritative Firestore inspection has completed. */
+  public async waitForInitialization(): Promise<void> {
+    await this.initPromise;
+  }
+
   public get(): DatabaseSchema {
     return this.data;
   }
