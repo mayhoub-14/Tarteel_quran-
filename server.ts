@@ -18,9 +18,15 @@ import { checkLessonOverlap, checkTwoLessonsConflict, getCairoToday, getCairoCur
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const JWT_SECRET: string = (() => {
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim() !== '') {
-    return process.env.JWT_SECRET.trim();
+  const configuredSecret = process.env.JWT_SECRET?.trim();
+  if (configuredSecret && configuredSecret.length >= 32) return configuredSecret;
+
+  // Serverless instances must never generate independent in-memory signing keys:
+  // requests can land on different instances and invalidate otherwise valid sessions.
+  if (process.env.VERCEL === '1') {
+    throw new Error('[Security] JWT_SECRET is required on Vercel and must contain at least 32 characters.');
   }
+
   const secretFile = path.resolve(process.cwd(), 'data', '.jwt_secret');
   try {
     if (fs.existsSync(secretFile)) {
@@ -31,9 +37,8 @@ const JWT_SECRET: string = (() => {
     fs.mkdirSync(path.dirname(secretFile), { recursive: true });
     fs.writeFileSync(secretFile, generated, { encoding: 'utf8', mode: 0o600 });
     return generated;
-  } catch (err) {
-    console.warn('[Security] Could not persist runtime JWT secret, using in-memory cryptographic secret');
-    return crypto.randomBytes(64).toString('hex');
+  } catch {
+    throw new Error('[Security] Could not load or persist the local JWT secret.');
   }
 })();
 
@@ -427,50 +432,12 @@ app.post('/api/auth/change-password', authenticate, (req: AuthenticatedRequest, 
 });
 
 // Request secure one-time password reset/setup link
-app.post('/api/auth/request-password-reset', (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email || typeof email !== 'string') {
-    return res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
-  }
-
-  const cleanEmail = email.trim().toLowerCase();
-  const profileIndex = db.get().profiles.findIndex(p => p.email.toLowerCase() === cleanEmail);
-
-  // Constant-time mitigation / prevent email enumeration
-  if (profileIndex === -1) {
-    return res.json({
-      message: 'إذا كان البريد الإلكتروني مسجلاً، فقد تم إصدار رابط تعيين كلمة المرور بنجاح.'
-    });
-  }
-
-  const profile = db.get().profiles[profileIndex];
-
-  // Generate a cryptographically secure 256-bit random token
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  // Store a SHA-256 hash of the token in the database for security (token at rest protection)
-  const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-  // 1-hour expiration
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-
-  profile.passwordResetToken = tokenHash;
-  profile.passwordResetExpires = expiresAt;
-  profile.updatedAt = new Date().toISOString();
-  db.recordChange('profiles', profile.id, profile);
-  db.save();
-
-  logAudit(
-    profile,
-    'REQUEST_PASSWORD_RESET',
-    'USER',
-    profile.id,
-    `طلب رابط آمن لتعيين كلمة المرور لحساب (${profile.email})`
-  );
-
-  return res.json({
-    message: 'إذا كان البريد الإلكتروني مسجلاً، فقد تم إصدار رابط تعيين كلمة المرور بنجاح.',
-    // Provide the reset token in response for one-time initialization/setup
-    setupToken: resetToken,
-    expiresAt
+app.post('/api/auth/request-password-reset', (_req: Request, res: Response) => {
+  // Never return reset tokens from an unauthenticated API response. This project
+  // does not yet have a verified outbound email provider configured to deliver
+  // one-time links to the account owner.
+  return res.status(503).json({
+    error: 'استعادة كلمة المرور عبر البريد غير مفعّلة حاليًا. تواصل مع إدارة الأكاديمية لإتمام الاستعادة بأمان.'
   });
 });
 
