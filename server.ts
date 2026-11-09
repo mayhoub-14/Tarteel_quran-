@@ -441,60 +441,10 @@ app.post('/api/auth/request-password-reset', (_req: Request, res: Response) => {
   });
 });
 
-// Verify token and set new password securely
-app.post('/api/auth/setup-password', (req: Request, res: Response) => {
-  const { token, newPassword, confirmPassword } = req.body;
-
-  if (!token || typeof token !== 'string') {
-    return res.status(400).json({ error: 'رمز تعيين كلمة المرور غير صالح أو مفقود' });
-  }
-
-  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
-    return res.status(400).json({ error: 'يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف وأرقام لضمان الأمان' });
-  }
-
-  if (newPassword !== confirmPassword) {
-    return res.status(400).json({ error: 'كلمة المرور وتأكيدها غير متطابقين' });
-  }
-
-  const incomingHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
-  const now = new Date().toISOString();
-
-  // Find user with matching unexpired token
-  const profileIndex = db.get().profiles.findIndex(p =>
-    p.passwordResetToken === incomingHash &&
-    p.passwordResetExpires &&
-    p.passwordResetExpires > now
-  );
-
-  if (profileIndex === -1) {
-    return res.status(400).json({ error: 'رابط تعيين كلمة المرور غير صالح أو انتهت صلاحيته. يرجى طلب رابط جديد.' });
-  }
-
-  const profile = db.get().profiles[profileIndex];
-
-  // Hash password using bcrypt with standard high-workfactor 10 rounds and unique salt
-  const salt = bcrypt.genSaltSync(10);
-  profile.passwordHash = bcrypt.hashSync(newPassword, salt);
-
-  // Invalidate the one-time token immediately upon consumption
-  delete profile.passwordResetToken;
-  delete profile.passwordResetExpires;
-  profile.updatedAt = new Date().toISOString();
-
-  db.recordChange('profiles', profile.id, profile);
-  db.save();
-
-  logAudit(
-    profile,
-    'PASSWORD_RESET_COMPLETED',
-    'USER',
-    profile.id,
-    `تم إتمام تعيين كلمة المرور بنجاح وبشكل آمن للحساب (${profile.email})`
-  );
-
-  return res.json({
-    message: 'تم تعيين كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول مباشرة ببياناتك الجديدة.'
+// Password reset cannot be completed until a verified email delivery provider is configured.
+app.post('/api/auth/setup-password', (_req: Request, res: Response) => {
+  return res.status(503).json({
+    error: 'إعادة تعيين كلمة المرور غير مفعّلة حاليًا. تواصل مع إدارة الأكاديمية لإتمام الاستعادة بأمان.'
   });
 });
 
