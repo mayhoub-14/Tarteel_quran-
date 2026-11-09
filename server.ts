@@ -267,10 +267,13 @@ app.post('/api/auth/firebase-login', async (req: Request, res: Response) => {
 
   // 3. Extract verified identity strictly from the cryptographically validated token
   const verifiedEmail = verifiedToken.email ? String(verifiedToken.email).trim().toLowerCase() : null;
-  const verifiedUid = verifiedToken.uid;
 
   if (!verifiedEmail) {
     return res.status(400).json({ error: 'رمز الدخول الموثق لا يحتوي على بريد إلكتروني صالح' });
+  }
+
+  if (verifiedToken.email_verified !== true) {
+    return res.status(403).json({ error: 'يجب تأكيد البريد الإلكتروني في حساب Google قبل تسجيل الدخول.' });
   }
 
   // 4. Match with existing server-side profile (Never trust client-supplied roles or emails)
@@ -2211,8 +2214,13 @@ app.get('/api/admin/firestore-status', authenticate, requireAdmin, async (_req: 
 // POST /api/admin/firestore-sync - Admin triggers manual Firestore sync
 app.post('/api/admin/firestore-sync', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await db.syncToFirestore();
-    logAudit(req.user!, 'FIRESTORE_SYNC', 'SETTINGS', 'firestore', 'مزامنة كاملة يدوية مع قاعدة بيانات Firebase Firestore');
+    // Use the request-time sync path so initialization/sync failures are surfaced
+    // to the admin instead of reporting success when a background sync was blocked.
+    await db.saveAndSync();
+    if (db.getPendingChangesCount() > 0) {
+      throw new Error('لا تزال هناك تغييرات معلقة لم يتم تأكيد حفظها في Firestore.');
+    }
+    logAudit(req.user!, 'FIRESTORE_SYNC', 'SETTINGS', 'firestore', 'تم التحقق من اكتمال مزامنة التغييرات المعلقة مع Firebase Firestore');
     return res.json({
       success: true,
       message: 'تمت مزامنة جميع البيانات بنجاح مع Firebase Firestore',
