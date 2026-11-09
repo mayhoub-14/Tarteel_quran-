@@ -1,0 +1,1269 @@
+{
+  "profiles": [
+    {
+      "createdAt": "2026-10-31T23:26:46.933Z",
+      "role": "TEACHER",
+      "passwordHash": "$2b$10$JcIc4wfDLUfLrf7E6Yzgo.UlbCXM4jDz4WzkpPi1hCdodkvgFV8QW",
+      "fullName": "خديجة عبد الله المبروك",
+      "updatedAt": "2026-11-03T23:02:37.413Z",
+      "email": "khadija@test.com",
+      "id": "284e94a8-37e8-451a-a41b-de56b2d120f1",
+      "preferredTimeZone": "Africa/Cairo",
+      "username": "khadija_test",
+      "status": "ACTIVE",
+      "gender": "FEMALE"
+    },
+    {
+      "status": "ACTIVE",
+      "passwordHash": "$2b$10$qdgPxCDj.52wKy0cCRAnk.62dQaw98cu3j3N9JxPEmoQ4.a2hJk8a",
+      "id": "admin-tarteel-root",
+      "fullName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "email": "amyhoub7@gmail.com",
+      "role": "ADMIN",
+      "username": "amyhoub7",
+      "updatedAt": "2026-11-09T16:14:30.051Z",
+      "preferredTimeZone": "Africa/Cairo",
+      "createdAt": "2026-10-31T22:39:04.831Z"
+    },
+    {
+      "status": "ACTIVE",
+      "gender": "MALE",
+      "preferredTimeZone": "Africa/Cairo",
+      "email": "m.abdelrahman@tarteel-academy.org",
+      "fullName": "محمد عبد الرحمن القرشي",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "updatedAt": "2026-10-31T22:39:04.832Z",
+      "passwordHash": "$2b$10$hFP0Vyg2jD9L1LTCt8OedOo8F3zGNDr95D/HjPd/650EBbmne8.8a",
+      "role": "TEACHER",
+      "id": "teacher-sheikh-mohamed",
+      "username": "mohamed_tarteel"
+    },
+    {
+      "email": "s.kordi@example.com",
+      "status": "ACTIVE",
+      "gender": "FEMALE",
+      "id": "teacher-sheikha-sarah",
+      "fullName": "سارة أحمد الكردي",
+      "username": "sarah_kordi",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "preferredTimeZone": "Asia/Riyadh",
+      "role": "TEACHER",
+      "updatedAt": "2026-10-31T23:26:39.585Z",
+      "passwordHash": "$2b$10$hFP0Vyg2jD9L1LTCt8OedOo8F3zGNDr95D/HjPd/650EBbmne8.8a"
+    }
+  ],
+  "students": [
+    {
+      "timeZone": "Africa/Cairo",
+      "teacherId": "teacher-sheikh-mohamed",
+      "isArchived": false,
+      "country": "مصر",
+      "durationMinutes": 40,
+      "updatedAt": "2026-11-01T19:16:44.749Z",
+      "fullName": "طالب تجربة 40",
+      "id": "1073eeaa-01e1-4b63-a3bc-5245631be68a",
+      "createdAt": "2026-11-01T19:16:44.749Z"
+    },
+    {
+      "fullName": "نورة",
+      "id": "2357abd7-3032-40d4-88b3-aedc85bc6d33",
+      "isArchived": false,
+      "completedEpisodes": [
+        1,
+        2,
+        3
+      ],
+      "durationMinutes": 30,
+      "teacherId": "teacher-sheikh-mohamed",
+      "studyDaysPerWeek": 4,
+      "updatedAt": "2026-11-04T22:31:38.305Z",
+      "country": "المملكة العربية السعودية",
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3
+        ]
+      },
+      "createdAt": "2026-11-04T22:31:21.417Z",
+      "timeZone": "Asia/Riyadh"
+    },
+    {
+      "studyDaysPerWeek": 4,
+      "completedEpisodes": [
+        4,
+        16
+      ],
+      "fullName": "طالب تجريبي حلقات",
+      "id": "2b8526f5-ff21-4449-a0a4-ef9903014780",
+      "createdAt": "2026-11-03T22:52:16.622Z",
+      "isArchived": false,
+      "updatedAt": "2026-11-03T22:52:16.738Z",
+      "teacherId": "teacher-sheikh-mohamed",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "country": "المملكة العربية السعودية"
+    },
+    {
+      "durationMinutes": 30,
+      "fullName": "طالب اختبار تلقائي",
+      "teacherId": "teacher-sheikh-mohamed",
+      "country": "مصر",
+      "updatedAt": "2026-11-01T19:16:44.731Z",
+      "id": "38724581-918a-4373-8f49-f3a683fbbe21",
+      "timeZone": "Africa/Cairo",
+      "isArchived": false,
+      "createdAt": "2026-11-01T19:16:44.731Z"
+    },
+    {
+      "fullName": "طالب تجربة 30",
+      "teacherId": "teacher-sheikh-mohamed",
+      "isArchived": false,
+      "createdAt": "2026-11-01T19:16:44.742Z",
+      "country": "مصر",
+      "id": "56487887-921f-4c41-aa9e-65a25af81298",
+      "durationMinutes": 30,
+      "updatedAt": "2026-11-01T19:16:44.742Z",
+      "timeZone": "Africa/Cairo"
+    },
+    {
+      "durationMinutes": 30,
+      "teacherId": "teacher-sheikh-mohamed",
+      "country": "المملكة العربية السعودية",
+      "fullName": "لتزنتظ",
+      "id": "5dbe11a2-6a88-47a4-aef4-e69d9b5e9278",
+      "timeZone": "Asia/Riyadh",
+      "updatedAt": "2026-11-03T22:41:30.931Z",
+      "isArchived": false,
+      "createdAt": "2026-11-03T22:41:30.931Z"
+    },
+    {
+      "durationMinutes": 30,
+      "studyDaysPerWeek": 3,
+      "id": "97927cf4-cfb2-44a1-b245-308771178390",
+      "timeZone": "Asia/Riyadh",
+      "teacherId": "teacher-sheikha-sarah",
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "completedEpisodes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "isArchived": false,
+      "updatedAt": "2026-11-04T20:28:38.512Z",
+      "fullName": "احمد",
+      "country": "المملكة العربية السعودية",
+      "createdAt": "2026-11-04T20:27:57.069Z"
+    },
+    {
+      "teacherId": "teacher-sheikh-mohamed",
+      "country": "مصر",
+      "fullName": "طالب تجربة 35",
+      "isArchived": false,
+      "durationMinutes": 35,
+      "timeZone": "Africa/Cairo",
+      "createdAt": "2026-11-01T19:16:44.746Z",
+      "id": "a88b28a9-3aea-4479-8a45-fec16f010d2c",
+      "updatedAt": "2026-11-01T19:16:44.746Z"
+    },
+    {
+      "country": "المملكة العربية السعودية",
+      "id": "f9d96bfa-94bc-4c83-b0e6-a498c44bb98e",
+      "completedEpisodes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "teacherId": "teacher-sheikha-sarah",
+      "timeZone": "Asia/Riyadh",
+      "fullName": "انال",
+      "updatedAt": "2026-11-05T09:54:35.677Z",
+      "studyDaysPerWeek": 4,
+      "isArchived": false,
+      "createdAt": "2026-11-05T09:54:17.987Z",
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "durationMinutes": 30
+    },
+    {
+      "teacherId": "teacher-sheikh-mohamed",
+      "timeZone": "Africa/Cairo",
+      "isArchived": false,
+      "updatedAt": "2026-11-04T19:46:52.822Z",
+      "id": "student-ahmed",
+      "studyDaysPerWeek": 3,
+      "durationMinutes": 30,
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ]
+      },
+      "country": "مصر",
+      "completedEpisodes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "fullName": "أحمد محمود العلي",
+      "quranProgress": {
+        "completedPortion": "الآيات 1 - 32",
+        "lastUpdated": "2026-11-02T16:00:00.000Z",
+        "completedSurahs": [
+          "الفاتحة",
+          "البقرة"
+        ],
+        "revisionProgress": "مراجعة لسورة البقرة مع ضبط المتشابهات",
+        "currentSurah": "آل عمران",
+        "remainingMemorization": "باقي سورة آل عمران",
+        "status": "IN_PROGRESS",
+        "notes": "يحتاج إلى تركيز أكثر في أحكام المد اللازم والمنفصل"
+      },
+      "createdAt": "2026-10-31T22:39:04.832Z"
+    },
+    {
+      "quranProgress": {
+        "completedSurahs": [
+          "الفاتحة",
+          "جزء عم"
+        ],
+        "completedPortion": "بداية السورة",
+        "lastUpdated": "2026-10-25T14:00:00.000Z",
+        "revisionProgress": "مراجعة قصار السور من الضحى للناس",
+        "currentSurah": "الملك",
+        "notes": "تحتاج لتثبيت سورة النبأ والنازعات قبل الاستمرار",
+        "remainingMemorization": "سورة الملك كاملة",
+        "status": "NEEDS_REVISION"
+      },
+      "durationMinutes": 35,
+      "country": "المملكة العربية السعودية",
+      "fullName": "فاطمة الزهراء الشريف",
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "isArchived": false,
+      "createdAt": "2026-10-20T10:00:00.000Z",
+      "teacherId": "teacher-sheikha-sarah",
+      "completedEpisodes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "timeZone": "Asia/Riyadh",
+      "studyDaysPerWeek": 2,
+      "id": "student-fatima",
+      "updatedAt": "2026-11-04T20:28:49.574Z"
+    },
+    {
+      "updatedAt": "2026-11-04T20:28:53.775Z",
+      "completedEpisodes": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "isArchived": false,
+      "fullName": "مريم عبد الله المهيري",
+      "quranProgress": {
+        "completedPortion": "الآيات 1 - 15",
+        "status": "IN_PROGRESS",
+        "revisionProgress": "تثبيت سورتي الرحمن والواقعة",
+        "completedSurahs": [
+          "الفاتحة",
+          "سورة يس",
+          "سورة الرحمن",
+          "سورة الواقعة"
+        ],
+        "remainingMemorization": "الآيات 16 - 30",
+        "currentSurah": "الملك",
+        "lastUpdated": "2026-11-03T12:00:00.000Z",
+        "notes": "حفظ جيد جداً وصوت ندي بالقراءة"
+      },
+      "country": "الإمارات العربية المتحدة",
+      "teacherId": "teacher-sheikha-sarah",
+      "durationMinutes": 30,
+      "studyDaysPerWeek": 3,
+      "timeZone": "Asia/Dubai",
+      "id": "student-mariam",
+      "createdAt": "2026-11-01T10:00:00.000Z",
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "durationMinutes": 30,
+      "isArchived": false,
+      "timeZone": "Asia/Riyadh",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "country": "المملكة العربية السعودية",
+      "completedEpisodes": [
+        1,
+        2,
+        3
+      ],
+      "studyDaysPerWeek": 2,
+      "assignmentHistory": [
+        {
+          "assignedAt": "2026-10-31T22:39:04.832Z",
+          "teacherName": "محمد عبد الرحمن القرشي",
+          "teacherId": "teacher-sheikh-mohamed",
+          "reason": "توزيع أحمال المعلمين وتوجيه الطالبة لمعلمة معتمدة",
+          "unassignedAt": "2026-11-04T18:38:19.960Z"
+        }
+      ],
+      "teacherId": "teacher-sheikha-sarah",
+      "id": "student-noura",
+      "updatedAt": "2026-11-04T18:38:19.960Z",
+      "fullName": "نورة خالد صالح الرشيد",
+      "quranProgress": {
+        "status": "IN_PROGRESS",
+        "currentSurah": "سورة النساء",
+        "completedSurahs": [
+          "الفاتحة",
+          "البقرة",
+          "آل عمران"
+        ],
+        "completedPortion": "الآيات 1-30",
+        "lastUpdated": "2026-11-04T18:38:15.468Z",
+        "revisionProgress": "ممتاز ومتقن",
+        "remainingMemorization": "146 آية",
+        "notes": "حرص واجتهاد ملموس وتطبيق ممتاز لأحكام النون الساكنة"
+      }
+    },
+    {
+      "completedEpisodes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "id": "student-omar",
+      "studyDaysPerWeek": 4,
+      "fullName": "عمر سلطان الشامسي",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "isArchived": false,
+      "durationMinutes": 30,
+      "timeZone": "Asia/Dubai",
+      "teacherId": "teacher-sheikh-mohamed",
+      "quranProgress": {
+        "notes": "أتم مقرر الشهر بنجاح وحصل على شهادة تقدير",
+        "completedPortion": "كامل سورة مريم وجارٍ البدء في طه",
+        "revisionProgress": "مراجعة متقنة للسور السابقة",
+        "lastUpdated": "2026-11-04T09:00:00.000Z",
+        "status": "COMPLETED",
+        "remainingMemorization": "سورة طه كاملة",
+        "currentSurah": "طه",
+        "completedSurahs": [
+          "جزء عم",
+          "جزء تبارك",
+          "سورة الكهف",
+          "سورة مريم"
+        ]
+      },
+      "updatedAt": "2026-11-04T19:46:46.673Z",
+      "country": "الإمارات العربية المتحدة",
+      "monthlyCompletedEpisodes": {
+        "2026-11": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      }
+    },
+    {
+      "studyDaysPerWeek": 2,
+      "completedEpisodes": [
+        1,
+        2
+      ],
+      "createdAt": "2026-11-01T14:00:00.000Z",
+      "timeZone": "Asia/Riyadh",
+      "durationMinutes": 30,
+      "quranProgress": {
+        "revisionProgress": "تلاوة جيدة لقصار السور",
+        "currentSurah": "القارعة",
+        "lastUpdated": "2026-11-03T15:00:00.000Z",
+        "completedPortion": "كامل السورة",
+        "remainingMemorization": "العاديات والزلزلة",
+        "notes": "طالب مبتدئ متحمس وذو همة عالية",
+        "completedSurahs": [
+          "الفاتحة",
+          "الإخلاص",
+          "الفلق",
+          "الناس"
+        ],
+        "status": "IN_PROGRESS"
+      },
+      "id": "student-yusuf",
+      "updatedAt": "2026-11-03T15:00:00.000Z",
+      "teacherId": "284e94a8-37e8-451a-a41b-de56b2d120f1",
+      "isArchived": false,
+      "country": "المملكة العربية السعودية",
+      "fullName": "يوسف خالد الغامدي"
+    }
+  ],
+  "lessons": [
+    {
+      "durationMinutes": 30,
+      "createdAt": "2026-11-03T22:52:16.622Z",
+      "status": "ACTIVE",
+      "dayOfWeek": 2,
+      "updatedAt": "2026-11-03T22:52:16.622Z",
+      "studentId": "2b8526f5-ff21-4449-a0a4-ef9903014780",
+      "id": "0f6cc905-eb7d-4393-b51d-0236fce79fd2",
+      "teacherId": "teacher-sheikh-mohamed",
+      "timeZone": "Asia/Riyadh",
+      "localTime": "17:00",
+      "isRecurring": true
+    },
+    {
+      "teacherId": "teacher-sheikha-sarah",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "localTime": "20:00",
+      "isRecurring": true,
+      "dayOfWeek": 2,
+      "id": "11f45c58-dd15-417e-95d7-3962a224e1fe",
+      "createdAt": "2026-11-04T20:27:57.069Z",
+      "status": "ACTIVE",
+      "studentId": "97927cf4-cfb2-44a1-b245-308771178390",
+      "updatedAt": "2026-11-04T20:27:57.069Z"
+    },
+    {
+      "createdAt": "2026-11-03T22:52:16.622Z",
+      "id": "1ce22674-d44e-4352-87c7-9ce14a5427eb",
+      "isRecurring": true,
+      "dayOfWeek": 0,
+      "updatedAt": "2026-11-03T22:52:16.622Z",
+      "studentId": "2b8526f5-ff21-4449-a0a4-ef9903014780",
+      "status": "ACTIVE",
+      "teacherId": "teacher-sheikh-mohamed",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "localTime": "17:00"
+    },
+    {
+      "id": "25f60c0a-79f4-4cc3-95f2-106771549c7a",
+      "updatedAt": "2026-11-03T22:52:16.622Z",
+      "durationMinutes": 30,
+      "isRecurring": true,
+      "studentId": "2b8526f5-ff21-4449-a0a4-ef9903014780",
+      "createdAt": "2026-11-03T22:52:16.622Z",
+      "timeZone": "Asia/Riyadh",
+      "status": "ACTIVE",
+      "dayOfWeek": 3,
+      "localTime": "17:00",
+      "teacherId": "teacher-sheikh-mohamed"
+    },
+    {
+      "dayOfWeek": 4,
+      "createdAt": "2026-11-04T20:27:57.069Z",
+      "studentId": "97927cf4-cfb2-44a1-b245-308771178390",
+      "updatedAt": "2026-11-04T20:27:57.069Z",
+      "isRecurring": true,
+      "teacherId": "teacher-sheikha-sarah",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "id": "27bfa72e-6b8c-4a07-8a5d-bea9aba49eb5",
+      "localTime": "20:00",
+      "status": "ACTIVE"
+    },
+    {
+      "isRecurring": true,
+      "status": "ACTIVE",
+      "id": "281e2d6a-3928-4310-9039-0c5f9008dde5",
+      "teacherId": "teacher-sheikh-mohamed",
+      "localTime": "16:00",
+      "durationMinutes": 30,
+      "createdAt": "2026-11-01T19:16:44.731Z",
+      "dayOfWeek": 1,
+      "timeZone": "Africa/Cairo",
+      "updatedAt": "2026-11-01T19:16:44.731Z",
+      "studentId": "38724581-918a-4373-8f49-f3a683fbbe21"
+    },
+    {
+      "id": "2f28d76a-3bfa-4d99-b2be-47799134e258",
+      "localTime": "17:00",
+      "timeZone": "Asia/Riyadh",
+      "teacherId": "teacher-sheikh-mohamed",
+      "durationMinutes": 30,
+      "studentId": "5dbe11a2-6a88-47a4-aef4-e69d9b5e9278",
+      "status": "ACTIVE",
+      "updatedAt": "2026-11-03T22:41:30.931Z",
+      "dayOfWeek": 2,
+      "createdAt": "2026-11-03T22:41:30.931Z",
+      "isRecurring": true
+    },
+    {
+      "teacherId": "teacher-sheikh-mohamed",
+      "isRecurring": true,
+      "localTime": "15:00",
+      "id": "2f291c3e-083d-4872-979a-038de5c7f09e",
+      "dayOfWeek": 2,
+      "createdAt": "2026-11-04T22:31:21.417Z",
+      "timeZone": "Asia/Riyadh",
+      "status": "ACTIVE",
+      "studentId": "2357abd7-3032-40d4-88b3-aedc85bc6d33",
+      "durationMinutes": 30,
+      "updatedAt": "2026-11-04T22:31:21.417Z"
+    },
+    {
+      "id": "4fc02fe3-4f86-4886-916c-d1abd5bdf162",
+      "teacherId": "teacher-sheikh-mohamed",
+      "isRecurring": true,
+      "durationMinutes": 30,
+      "localTime": "15:00",
+      "createdAt": "2026-11-04T22:31:21.417Z",
+      "status": "ACTIVE",
+      "dayOfWeek": 0,
+      "updatedAt": "2026-11-04T22:31:21.417Z",
+      "timeZone": "Asia/Riyadh",
+      "studentId": "2357abd7-3032-40d4-88b3-aedc85bc6d33"
+    },
+    {
+      "isRecurring": true,
+      "localTime": "23:20",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "teacherId": "teacher-sheikha-sarah",
+      "updatedAt": "2026-11-05T09:54:17.988Z",
+      "status": "ACTIVE",
+      "studentId": "f9d96bfa-94bc-4c83-b0e6-a498c44bb98e",
+      "id": "5d48188b-3469-4c9d-a107-4892a97b354e",
+      "createdAt": "2026-11-05T09:54:17.988Z",
+      "dayOfWeek": 1
+    },
+    {
+      "id": "5e47acd4-d4e1-4e63-ac9e-04fc746b3dc5",
+      "teacherId": "teacher-sheikha-sarah",
+      "localTime": "20:00",
+      "isRecurring": true,
+      "dayOfWeek": 0,
+      "createdAt": "2026-11-04T20:27:57.069Z",
+      "timeZone": "Asia/Riyadh",
+      "studentId": "97927cf4-cfb2-44a1-b245-308771178390",
+      "status": "ACTIVE",
+      "updatedAt": "2026-11-04T20:27:57.069Z",
+      "durationMinutes": 30
+    },
+    {
+      "timeZone": "Asia/Riyadh",
+      "studentId": "f9d96bfa-94bc-4c83-b0e6-a498c44bb98e",
+      "updatedAt": "2026-11-05T09:54:17.988Z",
+      "id": "840a3d3b-28d2-43b8-82cd-8b2cfbd88326",
+      "status": "ACTIVE",
+      "dayOfWeek": 5,
+      "isRecurring": true,
+      "createdAt": "2026-11-05T09:54:17.988Z",
+      "localTime": "23:20",
+      "teacherId": "teacher-sheikha-sarah",
+      "durationMinutes": 30
+    },
+    {
+      "localTime": "17:00",
+      "isRecurring": true,
+      "timeZone": "Asia/Riyadh",
+      "teacherId": "teacher-sheikh-mohamed",
+      "status": "ACTIVE",
+      "updatedAt": "2026-11-03T22:41:30.931Z",
+      "studentId": "5dbe11a2-6a88-47a4-aef4-e69d9b5e9278",
+      "id": "854ba346-68ef-47a6-bc60-6320e0065ee9",
+      "createdAt": "2026-11-03T22:41:30.931Z",
+      "dayOfWeek": 1,
+      "durationMinutes": 30
+    },
+    {
+      "studentId": "2357abd7-3032-40d4-88b3-aedc85bc6d33",
+      "updatedAt": "2026-11-04T22:31:21.417Z",
+      "dayOfWeek": 3,
+      "createdAt": "2026-11-04T22:31:21.417Z",
+      "isRecurring": true,
+      "id": "a00f74b3-7004-4053-b0b4-b2021680a680",
+      "localTime": "15:00",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "teacherId": "teacher-sheikh-mohamed",
+      "status": "ACTIVE"
+    },
+    {
+      "status": "ACTIVE",
+      "createdAt": "2026-11-03T22:41:30.931Z",
+      "dayOfWeek": 3,
+      "updatedAt": "2026-11-03T22:41:30.931Z",
+      "id": "ad9aa0fb-f95e-4f1f-9ea2-6531f42cba6f",
+      "isRecurring": true,
+      "studentId": "5dbe11a2-6a88-47a4-aef4-e69d9b5e9278",
+      "durationMinutes": 30,
+      "teacherId": "teacher-sheikh-mohamed",
+      "timeZone": "Asia/Riyadh",
+      "localTime": "17:00"
+    },
+    {
+      "dayOfWeek": 3,
+      "createdAt": "2026-11-05T09:54:17.988Z",
+      "status": "ACTIVE",
+      "studentId": "f9d96bfa-94bc-4c83-b0e6-a498c44bb98e",
+      "id": "b5e99fda-40d3-4194-b1c7-bda259baf7b7",
+      "updatedAt": "2026-11-05T09:54:17.988Z",
+      "timeZone": "Asia/Riyadh",
+      "teacherId": "teacher-sheikha-sarah",
+      "durationMinutes": 30,
+      "localTime": "23:20",
+      "isRecurring": true
+    },
+    {
+      "localTime": "15:00",
+      "timeZone": "Asia/Riyadh",
+      "durationMinutes": 30,
+      "teacherId": "teacher-sheikh-mohamed",
+      "status": "ACTIVE",
+      "studentId": "2357abd7-3032-40d4-88b3-aedc85bc6d33",
+      "isRecurring": true,
+      "updatedAt": "2026-11-04T22:31:21.417Z",
+      "id": "ca4e1d5d-6160-4628-ab27-799f8850f83d",
+      "dayOfWeek": 4,
+      "createdAt": "2026-11-04T22:31:21.417Z"
+    },
+    {
+      "studentId": "f9d96bfa-94bc-4c83-b0e6-a498c44bb98e",
+      "id": "d6b2d4c9-4c80-45e3-8f44-f574749cd2e1",
+      "timeZone": "Asia/Riyadh",
+      "durationMinutes": 30,
+      "updatedAt": "2026-11-05T09:54:17.988Z",
+      "dayOfWeek": 0,
+      "status": "ACTIVE",
+      "createdAt": "2026-11-05T09:54:17.988Z",
+      "localTime": "23:20",
+      "teacherId": "teacher-sheikha-sarah",
+      "isRecurring": true
+    },
+    {
+      "id": "e525129f-edc4-4807-8a70-477da591228f",
+      "studentId": "2b8526f5-ff21-4449-a0a4-ef9903014780",
+      "updatedAt": "2026-11-03T22:52:16.622Z",
+      "status": "ACTIVE",
+      "dayOfWeek": 1,
+      "createdAt": "2026-11-03T22:52:16.622Z",
+      "localTime": "17:00",
+      "timeZone": "Asia/Riyadh",
+      "isRecurring": true,
+      "teacherId": "teacher-sheikh-mohamed",
+      "durationMinutes": 30
+    },
+    {
+      "localTime": "17:00",
+      "isRecurring": true,
+      "id": "e9a37f20-db62-4c0a-951f-73945229766c",
+      "teacherId": "teacher-sheikh-mohamed",
+      "durationMinutes": 30,
+      "timeZone": "Asia/Riyadh",
+      "studentId": "5dbe11a2-6a88-47a4-aef4-e69d9b5e9278",
+      "updatedAt": "2026-11-03T22:41:30.931Z",
+      "dayOfWeek": 0,
+      "status": "ACTIVE",
+      "createdAt": "2026-11-03T22:41:30.931Z"
+    },
+    {
+      "localTime": "17:00",
+      "id": "lesson-1",
+      "durationMinutes": 30,
+      "teacherId": "teacher-sheikha-sarah",
+      "updatedAt": "2026-11-04T18:38:19.960Z",
+      "isRecurring": true,
+      "studentId": "student-noura",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "dayOfWeek": 0,
+      "timeZone": "Asia/Riyadh"
+    },
+    {
+      "teacherId": "teacher-sheikha-sarah",
+      "durationMinutes": 30,
+      "localTime": "17:00",
+      "status": "ACTIVE",
+      "id": "lesson-2",
+      "isRecurring": true,
+      "dayOfWeek": 2,
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "timeZone": "Asia/Riyadh",
+      "studentId": "student-noura",
+      "updatedAt": "2026-11-04T18:38:19.960Z"
+    },
+    {
+      "dayOfWeek": 1,
+      "timeZone": "Africa/Cairo",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "studentId": "student-ahmed",
+      "isRecurring": true,
+      "updatedAt": "2026-10-31T22:39:04.832Z",
+      "durationMinutes": 35,
+      "teacherId": "teacher-sheikh-mohamed",
+      "localTime": "18:00",
+      "id": "lesson-3"
+    },
+    {
+      "status": "ACTIVE",
+      "studentId": "student-omar",
+      "timeZone": "Asia/Dubai",
+      "id": "lesson-4",
+      "updatedAt": "2026-10-31T22:39:04.832Z",
+      "dayOfWeek": 3,
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "localTime": "19:00",
+      "durationMinutes": 40,
+      "isRecurring": true,
+      "teacherId": "teacher-sheikh-mohamed"
+    },
+    {
+      "id": "lesson-khadija-yusuf-1",
+      "teacherId": "284e94a8-37e8-451a-a41b-de56b2d120f1",
+      "localTime": "17:00",
+      "isRecurring": true,
+      "dayOfWeek": 3,
+      "createdAt": "2026-11-01T14:00:00.000Z",
+      "timeZone": "Asia/Riyadh",
+      "studentId": "student-yusuf",
+      "status": "ACTIVE",
+      "updatedAt": "2026-11-01T14:00:00.000Z",
+      "durationMinutes": 30
+    },
+    {
+      "studentId": "student-fatima",
+      "timeZone": "Asia/Riyadh",
+      "updatedAt": "2026-10-20T10:00:00.000Z",
+      "dayOfWeek": 3,
+      "durationMinutes": 35,
+      "createdAt": "2026-10-20T10:00:00.000Z",
+      "id": "lesson-sarah-fatima-1",
+      "isRecurring": true,
+      "localTime": "14:30",
+      "status": "ACTIVE",
+      "teacherId": "teacher-sheikha-sarah"
+    },
+    {
+      "timeZone": "Asia/Dubai",
+      "status": "ACTIVE",
+      "teacherId": "teacher-sheikha-sarah",
+      "isRecurring": true,
+      "updatedAt": "2026-11-01T10:00:00.000Z",
+      "dayOfWeek": 3,
+      "localTime": "11:00",
+      "durationMinutes": 30,
+      "id": "lesson-sarah-mariam-1",
+      "studentId": "student-mariam",
+      "notes": "تمت مراجعة سورة يس بنجاح",
+      "isCompleted": true,
+      "createdAt": "2026-11-01T10:00:00.000Z"
+    },
+    {
+      "studentId": "student-mariam",
+      "timeZone": "Asia/Dubai",
+      "updatedAt": "2026-11-01T10:00:00.000Z",
+      "dayOfWeek": 5,
+      "createdAt": "2026-11-01T10:00:00.000Z",
+      "status": "ACTIVE",
+      "localTime": "11:00",
+      "durationMinutes": 30,
+      "id": "lesson-sarah-mariam-2",
+      "teacherId": "teacher-sheikha-sarah",
+      "isRecurring": true
+    }
+  ],
+  "lessonExceptions": [],
+  "certificateTemplates": [
+    {
+      "achievementFontSize": 40,
+      "nameY": 746,
+      "achievementX": 1000,
+      "nameX": 1000,
+      "isActive": true,
+      "updatedAt": "2026-10-31T22:39:04.832Z",
+      "fileName": "/tarteel-certificate-clean-template.png",
+      "nameColor": "#0a0a0a",
+      "maskX": 480,
+      "achievementColor": "#008037",
+      "maskY": 670,
+      "nameFontSize": 72,
+      "version": 1,
+      "id": "tarteel-official-template-v1",
+      "achievementY": 857,
+      "prefixText": "تقديراً لتفوقها في",
+      "maskWidth": 1040,
+      "maskHeight": 220
+    }
+  ],
+  "generatedCertificates": [
+    {
+      "teacherGender": "MALE",
+      "studentName": "احمد ميهوب",
+      "id": "51b7f3f4-2990-4c2c-9e8c-a05cd216ed03",
+      "teacherName": "محمد عبد الرحمن القرشي",
+      "achievement": "حفظ سورة المرسلات",
+      "teacherId": "teacher-sheikh-mohamed",
+      "templateVersion": 1,
+      "createdAt": "2026-11-03T22:46:42.432Z"
+    },
+    {
+      "templateVersion": 1,
+      "teacherGender": "MALE",
+      "createdAt": "2026-11-04T20:38:53.591Z",
+      "id": "5a215200-133c-4063-b485-6f4f876aee25",
+      "achievement": "حفظ سورة المرسلات",
+      "teacherName": "محمد عبد الرحمن القرشي",
+      "teacherId": "teacher-sheikh-mohamed",
+      "studentName": "احمد ميهوب"
+    },
+    {
+      "teacherName": "الشيخ محمد عبد الرحمن",
+      "achievement": "حفظ جزء عم",
+      "teacherId": "teacher-sheikh-mohamed",
+      "id": "72b71c2c-f420-492e-a19d-0cde2ebcb4f2",
+      "createdAt": "2026-10-31T22:41:46.429Z",
+      "templateVersion": 1,
+      "studentName": "احمد عبد الفتاح ميهوب"
+    },
+    {
+      "teacherGender": "MALE",
+      "teacherName": "محمد عبد الرحمن القرشي",
+      "achievement": "حفظ جزء عم",
+      "teacherId": "teacher-sheikh-mohamed",
+      "templateVersion": 1,
+      "studentName": "سلمى عبد الفتاح ميهوب",
+      "id": "7dc90778-28e7-4ba0-9106-194332f083ea",
+      "createdAt": "2026-11-04T22:33:17.010Z"
+    },
+    {
+      "teacherId": "teacher-sheikh-mohamed",
+      "createdAt": "2026-11-03T22:45:26.945Z",
+      "teacherGender": "MALE",
+      "templateVersion": 1,
+      "studentName": "نورة خالد صالح الرشيد",
+      "teacherName": "محمد عبد الرحمن القرشي",
+      "achievement": "حفظ جزء عم",
+      "id": "aa2feb53-75b7-429d-9fe1-8cf62a7ca377"
+    },
+    {
+      "id": "cert-sample-1",
+      "teacherName": "الشيخ محمد عبد الرحمن",
+      "achievement": "حفظ جزء عم",
+      "templateVersion": 1,
+      "teacherId": "teacher-sheikh-mohamed",
+      "studentName": "نورة خالد صالح الرشيد",
+      "createdAt": "2026-10-29T22:39:04.832Z"
+    },
+    {
+      "templateVersion": 1,
+      "achievement": "حفظ سورة البقرة",
+      "teacherName": "سارة أحمد الكردي",
+      "studentName": "سهام عادل",
+      "id": "ddc7a7f4-a2da-46d0-a82c-95ba0644ff5e",
+      "teacherId": "teacher-sheikha-sarah",
+      "createdAt": "2026-11-04T20:29:51.059Z",
+      "teacherGender": "FEMALE"
+    },
+    {
+      "templateVersion": 1,
+      "id": "e6350b48-536e-4cc3-9b15-bb932da0c186",
+      "studentName": "عمر أحمد",
+      "teacherId": "teacher-sheikha-sarah",
+      "teacherName": "سارة أحمد الكردي",
+      "achievement": "حفظ جزء عم",
+      "teacherGender": "FEMALE",
+      "createdAt": "2026-10-31T23:26:39.592Z"
+    },
+    {
+      "templateVersion": 1,
+      "teacherId": "teacher-sheikha-sarah",
+      "createdAt": "2026-11-05T09:53:01.471Z",
+      "studentName": "يوسف مهران",
+      "id": "f7362baf-c83d-40dc-9b43-9ef6c841c11b",
+      "teacherName": "سارة أحمد الكردي",
+      "achievement": "حفظ جزء عم",
+      "teacherGender": "FEMALE"
+    }
+  ],
+  "aiUsageLogs": [
+    {
+      "id": "353324c2-41e1-4e9c-98aa-283666e0ef18",
+      "details": "{\"error\":{\"code\":403,\"message\":\"The Gemini API free tier is not available for this project. To use the Gemini API, please set up billing to upgrade to the paid tier at https://aistudio.google.com/billing. For more information, see https://ai.google.d",
+      "status": "FAILED",
+      "prompt": "لوحة تعليمية إسلامية هادئة تظهر مصحفاً شريفاً مفتوحاً على حامل خشبي مزخرف، في روضة خضراء من النخيل والورود تحت ضوء الفجر، بألوان هوية أكاديمية ترتيل الخضراء والبيضاء.",
+      "teacherId": "teacher-sheikh-mohamed",
+      "createdAt": "2026-10-31T23:16:05.063Z"
+    },
+    {
+      "status": "FAILED",
+      "teacherId": "teacher-sheikh-mohamed",
+      "createdAt": "2026-10-31T22:52:15.122Z",
+      "details": "{\"error\":{\"code\":403,\"message\":\"The Gemini API free tier is not available for this project. To use the Gemini API, please set up billing to upgrade to the paid tier at https://aistudio.google.com/billing. For more information, see https://ai.google.d",
+      "prompt": "رسم تعليمي للأطفال يجسد قصة أصحاب الفيل برسم لطيف وهادئ",
+      "id": "9e8bf68d-5789-491e-a576-cee3685e4db8"
+    },
+    {
+      "createdAt": "2026-10-31T22:46:52.895Z",
+      "status": "FAILED",
+      "teacherId": "teacher-sheikh-mohamed",
+      "details": "This method is only supported by the Gemini Enterprise Agent Platform (previously known as Vertex AI).",
+      "prompt": "رسم تعليمي للأطفال يجسد قصة أصحاب الفيل برسم كرتوني لطيف",
+      "id": "cd0dd502-0f67-46c1-bb35-eac99a238323"
+    },
+    {
+      "id": "e09887e3-897c-4607-af8b-24bf554b18ab",
+      "status": "FAILED",
+      "createdAt": "2026-10-31T23:15:55.230Z",
+      "teacherId": "teacher-sheikh-mohamed",
+      "details": "{\"error\":{\"code\":403,\"message\":\"The Gemini API free tier is not available for this project. To use the Gemini API, please set up billing to upgrade to the paid tier at https://aistudio.google.com/billing. For more information, see https://ai.google.d",
+      "prompt": "رسم تعليمي للأطفال يجسد قصة أصحاب الفيل برسم كرتوني لطيف وهادئ، يظهر فيلاً كبيراً وأشجار نخيل في البادية وألوان مبهجة تناسب أطفال حلقات القرآن."
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "e531291c-ccbb-4aad-b67d-5291d78b3da7",
+      "actorId": "admin-tarteel-root",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "action": "PASSWORD_RESET_COMPLETED",
+      "targetType": "USER",
+      "targetId": "admin-tarteel-root",
+      "details": "تم إتمام تعيين كلمة المرور بنجاح وبشكل آمن للحساب (amyhoub7@gmail.com)",
+      "createdAt": "2026-11-09T16:14:30.053Z"
+    },
+    {
+      "targetType": "SETTINGS",
+      "actorId": "admin-tarteel-root",
+      "createdAt": "2026-11-05T22:53:46.047Z",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "targetId": "firestore",
+      "id": "309f6298-a538-4f11-81ed-5b472cf8e3d9",
+      "action": "FIRESTORE_SYNC",
+      "details": "مزامنة كاملة يدوية مع قاعدة بيانات Firebase Firestore"
+    },
+    {
+      "details": "تقديم مسير رواتب شهر نوفمبر 2026 بإجمالي 1040 ج.م (16 حلقة) وحالة (قيد المراجعة)",
+      "action": "SUBMIT_PAYROLL_REQUEST",
+      "id": "426f0af6-7117-43d7-a9a4-d7e990204a49",
+      "targetId": "51674347-b587-439f-8e54-e4e4d3e6474c",
+      "targetType": "USER",
+      "actorName": "سارة أحمد الكردي",
+      "createdAt": "2026-11-04T20:30:57.154Z",
+      "actorId": "teacher-sheikha-sarah"
+    },
+    {
+      "id": "47e21bd6-9d55-4a67-83ea-59fe1b613826",
+      "details": "تعديل حالة مسير رواتب المعلم (سارة أحمد الكردي) لشهر نوفمبر 2026 إلى: معتمد بانتظار التحويل",
+      "action": "UPDATE_PAYROLL_STATUS",
+      "targetId": "51674347-b587-439f-8e54-e4e4d3e6474c",
+      "createdAt": "2026-11-04T22:37:37.953Z",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "actorId": "admin-tarteel-root",
+      "targetType": "SETTINGS"
+    },
+    {
+      "id": "66e359cf-2663-48ec-96d0-439e3c7f3ea3",
+      "targetType": "USER",
+      "actorId": "admin-tarteel-root",
+      "targetId": "284e94a8-37e8-451a-a41b-de56b2d120f1",
+      "action": "APPROVE_TEACHER",
+      "actorName": "مدير أكاديمية ترتيل",
+      "createdAt": "2026-11-03T23:02:37.414Z",
+      "details": "تم اعتماد وتفعيل حساب المعلم: خديجة عبد الله المبروك (khadija_test)"
+    },
+    {
+      "targetType": "USER",
+      "actorId": "284e94a8-37e8-451a-a41b-de56b2d120f1",
+      "targetId": "284e94a8-37e8-451a-a41b-de56b2d120f1",
+      "id": "7a7dc06d-1e06-452e-abf2-085a6cd0df35",
+      "createdAt": "2026-10-31T23:26:46.934Z",
+      "actorName": "خديجة عبد الله المبروك",
+      "details": "سجلت في الأكاديمية: فضيلة المعلمة خديجة عبد الله المبروك (khadija_test) بانتظار الاعتماد",
+      "action": "TEACHER_REGISTERED"
+    },
+    {
+      "actorId": "admin-tarteel-root",
+      "action": "UPDATE_STUDENT_PROGRESS",
+      "id": "8c82e1db-5cbb-4917-9de4-34cdc4c5bbd4",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "createdAt": "2026-11-04T18:38:15.472Z",
+      "details": "تحديث تقدم حفظ القرآن للطالب (نورة خالد صالح الرشيد): سورة سورة النساء - حالة (IN_PROGRESS)",
+      "targetType": "STUDENT",
+      "targetId": "student-noura"
+    },
+    {
+      "id": "9189d40f-6fa6-4065-aab1-fcdfab717364",
+      "targetType": "USER",
+      "action": "SUBMIT_PAYROLL_REQUEST",
+      "createdAt": "2026-11-03T23:09:20.117Z",
+      "actorName": "محمد عبد الرحمن القرشي",
+      "actorId": "teacher-sheikh-mohamed",
+      "targetId": "e78f9bfe-702e-4391-ae39-aa05b7ef1bba",
+      "details": "تقديم مسير رواتب شهر نوفمبر 2026 بإجمالي 780 ج.م (12 حلقة) وحالة (قيد المراجعة)"
+    },
+    {
+      "id": "c4c3034a-c9ae-46e0-a0ab-05a3e7a8e33a",
+      "action": "UPDATE_PAYROLL_STATUS",
+      "actorId": "admin-tarteel-root",
+      "targetId": "51674347-b587-439f-8e54-e4e4d3e6474c",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "createdAt": "2026-11-04T22:37:43.460Z",
+      "targetType": "SETTINGS",
+      "details": "تعديل حالة مسير رواتب المعلم (سارة أحمد الكردي) لشهر نوفمبر 2026 إلى: تم التحويل والصرف بنجاح"
+    },
+    {
+      "id": "cfbf9acc-3014-4c17-ac27-87cd08a6b51d",
+      "actorId": "admin-tarteel-root",
+      "createdAt": "2026-11-04T18:38:19.961Z",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "targetId": "student-noura",
+      "targetType": "STUDENT",
+      "action": "REASSIGN_STUDENT_TEACHER",
+      "details": "إعادة إسناد الطالب (نورة خالد صالح الرشيد) من المعلم (محمد عبد الرحمن القرشي) إلى المعلم (سارة أحمد الكردي)"
+    },
+    {
+      "actorId": "admin-tarteel-root",
+      "targetType": "SETTINGS",
+      "targetId": "e78f9bfe-702e-4391-ae39-aa05b7ef1bba",
+      "createdAt": "2026-11-03T23:09:40.715Z",
+      "actorName": "مدير أكاديمية ترتيل",
+      "action": "UPDATE_PAYROLL_STATUS",
+      "details": "تعديل حالة مسير رواتب المعلم (محمد عبد الرحمن القرشي) لشهر نوفمبر 2026 إلى: تم التحويل والصرف بنجاح",
+      "id": "d77ca2b6-98b7-4c19-942d-5b8837a1f4a2"
+    },
+    {
+      "action": "UPDATE_PAYROLL_STATUS",
+      "details": "تعديل حالة مسير رواتب المعلم (سارة أحمد الكردي) لشهر نوفمبر 2026 إلى: معتمد بانتظار التحويل",
+      "id": "e153e460-bf75-4b24-848a-4612ebcc8846",
+      "createdAt": "2026-11-04T20:33:43.812Z",
+      "actorName": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "actorId": "admin-tarteel-root",
+      "targetType": "SETTINGS",
+      "targetId": "51674347-b587-439f-8e54-e4e4d3e6474c"
+    },
+    {
+      "targetType": "SETTINGS",
+      "id": "log-init-1",
+      "details": "تم تهيئة بوابة معلمي أكاديمية ترتيل القرآن الكريم بنجاح وتفعيل القالب الرسمي للشهادات",
+      "targetId": "system",
+      "createdAt": "2026-10-31T22:39:04.832Z",
+      "actorName": "مدير أكاديمية ترتيل",
+      "action": "SYSTEM_INITIALIZED",
+      "actorId": "admin-tarteel-root"
+    }
+  ],
+  "payrollRequests": [
+    {
+      "paymentMethod": "INSTAPAY",
+      "monthLabel": "نوفمبر 2026",
+      "reviewNotes": "",
+      "teacherId": "teacher-sheikha-sarah",
+      "teacherName": "سارة أحمد الكردي",
+      "emailSent": true,
+      "month": "2026-11",
+      "status": "PAID",
+      "accountHolder": "محمد عبد الرحمن القرشي",
+      "reviewedBy": "مدير أكاديمية ترتيل - الإدارة العامة (Super Admin)",
+      "lessonRate": 65,
+      "paymentAccount": "5435415438351",
+      "teacherEmail": "s.kordi@example.com",
+      "totalSalary": 1040,
+      "actualPaymentDate": "2026-11-04T22:37:43.459Z",
+      "submittedAt": "2026-11-04T20:30:56.147Z",
+      "reviewedAt": "2026-11-04T22:37:43.459Z",
+      "id": "51674347-b587-439f-8e54-e4e4d3e6474c",
+      "students": [
+        {
+          "ratePerLesson": 65,
+          "totalAmount": 260,
+          "studentId": "student-fatima",
+          "studentName": "فاطمة الزهراء الشريف",
+          "completedLessons": 4
+        },
+        {
+          "ratePerLesson": 65,
+          "studentName": "مريم عبد الله المهيري",
+          "studentId": "student-mariam",
+          "totalAmount": 325,
+          "completedLessons": 5
+        },
+        {
+          "studentId": "student-noura",
+          "completedLessons": 3,
+          "studentName": "نورة خالد صالح الرشيد",
+          "totalAmount": 195,
+          "ratePerLesson": 65
+        },
+        {
+          "completedLessons": 4,
+          "ratePerLesson": 65,
+          "studentName": "احمد",
+          "totalAmount": 260,
+          "studentId": "97927cf4-cfb2-44a1-b245-308771178390"
+        }
+      ],
+      "totalLessons": 16
+    },
+    {
+      "paymentMethod": "INSTAPAY",
+      "totalSalary": 780,
+      "students": [
+        {
+          "completedLessons": 3,
+          "ratePerLesson": 65,
+          "totalAmount": 195,
+          "studentName": "نورة خالد صالح الرشيد",
+          "studentId": "student-noura"
+        },
+        {
+          "totalAmount": 130,
+          "studentId": "student-ahmed",
+          "completedLessons": 2,
+          "studentName": "أحمد محمود العلي",
+          "ratePerLesson": 65
+        },
+        {
+          "totalAmount": 325,
+          "studentId": "student-omar",
+          "studentName": "عمر سلطان الشامسي",
+          "completedLessons": 5,
+          "ratePerLesson": 65
+        },
+        {
+          "ratePerLesson": 65,
+          "studentId": "38724581-918a-4373-8f49-f3a683fbbe21",
+          "totalAmount": 0,
+          "completedLessons": 0,
+          "studentName": "طالب اختبار تلقائي"
+        },
+        {
+          "studentName": "طالب تجربة 30",
+          "studentId": "56487887-921f-4c41-aa9e-65a25af81298",
+          "totalAmount": 0,
+          "ratePerLesson": 65,
+          "completedLessons": 0
+        },
+        {
+          "ratePerLesson": 65,
+          "totalAmount": 0,
+          "completedLessons": 0,
+          "studentName": "طالب تجربة 35",
+          "studentId": "a88b28a9-3aea-4479-8a45-fec16f010d2c"
+        },
+        {
+          "totalAmount": 0,
+          "ratePerLesson": 65,
+          "studentName": "طالب تجربة 40",
+          "studentId": "1073eeaa-01e1-4b63-a3bc-5245631be68a",
+          "completedLessons": 0
+        },
+        {
+          "studentName": "لتزنتظ",
+          "completedLessons": 0,
+          "studentId": "5dbe11a2-6a88-47a4-aef4-e69d9b5e9278",
+          "totalAmount": 0,
+          "ratePerLesson": 65
+        },
+        {
+          "ratePerLesson": 65,
+          "totalAmount": 130,
+          "studentId": "2b8526f5-ff21-4449-a0a4-ef9903014780",
+          "studentName": "طالب تجريبي حلقات",
+          "completedLessons": 2
+        }
+      ],
+      "paymentAccount": "mohamed_tarteel@instapay",
+      "id": "e78f9bfe-702e-4391-ae39-aa05b7ef1bba",
+      "submittedAt": "2026-11-03T23:09:19.134Z",
+      "teacherId": "teacher-sheikh-mohamed",
+      "monthLabel": "نوفمبر 2026",
+      "emailSent": true,
+      "accountHolder": "محمد عبد الرحمن القرشي",
+      "totalLessons": 12,
+      "reviewedAt": "2026-11-03T23:09:40.714Z",
+      "reviewNotes": "تم التحويل عبر انستاباي بنجاح برقم إشعار #TRT-2026-889",
+      "teacherEmail": "m.abdelrahman@tarteel-academy.org",
+      "teacherName": "محمد عبد الرحمن القرشي",
+      "status": "PAID",
+      "month": "2026-11",
+      "lessonRate": 65,
+      "reviewedBy": "مدير أكاديمية ترتيل"
+    }
+  ],
+  "settings": {
+    "maxAiImagesPerTeacherPerDay": 5,
+    "allowPublicTeacherRegistration": true,
+    "defaultDisplayTimeZone": "Africa/Cairo",
+    "maintenanceMode": false,
+    "academyName": "أكاديمية ترتيل القرآن الكريم"
+  }
+}

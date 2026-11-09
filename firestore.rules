@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. GLOBAL DEFAULT-DENY CATCH-ALL
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. PATH VALIDATION HELPER
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 3. SECURED COLLECTIONS
+    match /profiles/{userId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(userId);
+    }
+
+    match /students/{studentId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(studentId);
+    }
+
+    match /lessons/{lessonId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(lessonId);
+    }
+
+    match /lessonExceptions/{exceptionId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(exceptionId);
+    }
+
+    match /payrollRequests/{requestId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(requestId);
+    }
+
+    match /generatedCertificates/{certificateId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(certificateId);
+    }
+
+    match /certificateTemplates/{templateId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(templateId);
+    }
+
+    match /auditLogs/{logId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(logId);
+      allow delete: if false;
+    }
+
+    match /aiUsageLogs/{logId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(logId);
+    }
+
+    match /settings/{settingsId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(settingsId);
+    }
+
+    // 4. TEST CONNECTION
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account for a teacher or academy administrator",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 64 },
+        "email": { "type": "string", "format": "email", "maxLength": 128 },
+        "passwordHash": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["TEACHER", "ADMIN"] },
+        "gender": { "type": "string", "enum": ["MALE", "FEMALE"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "PENDING", "SUSPENDED", "REJECTED"] },
+        "phone": { "type": "string", "maxLength": 32 },
+        "preferredTimeZone": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "fullName", "username", "email", "role", "gender", "status", "createdAt"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Quran student enrolled under a teacher",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 128 },
+        "country": { "type": "string", "maxLength": 64 },
+        "timeZone": { "type": "string", "maxLength": 64 },
+        "durationMinutes": { "type": "number" },
+        "studyDaysPerWeek": { "type": "number" },
+        "completedEpisodes": { "type": "array" },
+        "quranProgress": { "type": "object" },
+        "assignmentHistory": { "type": "array" },
+        "isArchived": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "teacherId", "fullName", "country", "timeZone", "durationMinutes", "isArchived", "createdAt"]
+    },
+    "Lesson": {
+      "title": "Lesson",
+      "description": "Recurring weekly lesson schedule between student and teacher",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "dayOfWeek": { "type": "number" },
+        "localTime": { "type": "string", "maxLength": 8 },
+        "timeZone": { "type": "string", "maxLength": 64 },
+        "durationMinutes": { "type": "number" },
+        "isRecurring": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "CANCELLED"] },
+        "specificDate": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 512 },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "studentId", "teacherId", "dayOfWeek", "localTime", "timeZone", "durationMinutes", "isRecurring", "status", "createdAt"]
+    },
+    "LessonException": {
+      "title": "LessonException",
+      "description": "Specific date override, completion, or reschedule of a recurring lesson",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "lessonId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["COMPLETED", "CANCELLED", "RESCHEDULED"] },
+        "rescheduledTo": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 512 },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "lessonId", "date", "status", "createdAt"]
+    },
+    "PayrollRequest": {
+      "title": "PayrollRequest",
+      "description": "Monthly teacher salary request and payment record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "teacherName": { "type": "string", "maxLength": 128 },
+        "teacherEmail": { "type": "string", "format": "email", "maxLength": 128 },
+        "month": { "type": "string", "maxLength": 16 },
+        "monthLabel": { "type": "string", "maxLength": 64 },
+        "totalLessons": { "type": "number" },
+        "lessonRate": { "type": "number" },
+        "totalSalary": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["INSTAPAY", "WALLET"] },
+        "paymentAccount": { "type": "string", "maxLength": 128 },
+        "accountHolder": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["PENDING_REVIEW", "APPROVED", "RETURNED_FOR_CORRECTION", "REJECTED", "PAID"] },
+        "submittedAt": { "type": "string", "maxLength": 64 },
+        "reviewedAt": { "type": "string", "maxLength": 64 },
+        "reviewedBy": { "type": "string", "maxLength": 128 },
+        "reviewNotes": { "type": "string", "maxLength": 512 },
+        "actualPaymentDate": { "type": "string", "maxLength": 64 },
+        "studentsSnapshot": { "type": "array" },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "teacherId", "teacherName", "month", "totalLessons", "lessonRate", "totalSalary", "paymentMethod", "paymentAccount", "accountHolder", "status", "submittedAt"]
+    },
+    "GeneratedCertificate": {
+      "title": "GeneratedCertificate",
+      "description": "Appreciation certificate issued to a student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "teacherName": { "type": "string", "maxLength": 128 },
+        "teacherGender": { "type": "string", "maxLength": 16 },
+        "studentName": { "type": "string", "maxLength": 128 },
+        "studentGender": { "type": "string", "maxLength": 16 },
+        "memorizationAchievement": { "type": "string", "maxLength": 512 },
+        "issuedAt": { "type": "string", "maxLength": 64 },
+        "certificateNumber": { "type": "string", "maxLength": 64 },
+        "imageUrl": { "type": "string", "maxLength": 1024 }
+      },
+      "required": ["id", "teacherId", "teacherName", "studentName", "studentGender", "memorizationAchievement", "issuedAt", "certificateNumber"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "System administrative audit log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "actorId": { "type": "string", "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 64 },
+        "targetType": { "type": "string", "maxLength": 64 },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1024 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "actorId", "actorName", "action", "details", "createdAt"]
+    },
+    "AcademySettings": {
+      "title": "AcademySettings",
+      "description": "Academy global configuration and templates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "certificateTemplate": { "type": "object" },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles for teachers and admins"
+    },
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Student records assigned to teachers"
+    },
+    "/lessons/{lessonId}": {
+      "schema": "Lesson",
+      "description": "Recurring weekly lessons"
+    },
+    "/lessonExceptions/{exceptionId}": {
+      "schema": "LessonException",
+      "description": "Lesson date exceptions and completions"
+    },
+    "/payrollRequests/{requestId}": {
+      "schema": "PayrollRequest",
+      "description": "Monthly payroll submissions and reviews"
+    },
+    "/generatedCertificates/{certificateId}": {
+      "schema": "GeneratedCertificate",
+      "description": "Certificates issued to students"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Administrative actions audit trail"
+    },
+    "/settings/{settingsId}": {
+      "schema": "AcademySettings",
+      "description": "Global academy settings and configurations"
+    }
+  }
+}

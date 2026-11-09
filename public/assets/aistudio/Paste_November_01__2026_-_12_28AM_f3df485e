@@ -1,0 +1,636 @@
+Build a Complete Full-Stack Application: Tarteel Teachers Portal
+
+Build a complete, production-oriented web application called "Tarteel Teachers Portal" for أكاديمية ترتيل القرآن الكريم.
+
+IMPORTANT: I am a complete beginner with absolutely no programming experience. You must generate the application, implement the frontend and backend, configure the database and authentication, and guide me through every required setup step using simple language. Do not assume I can edit code manually.
+
+I am attaching the official certificate reference image with this prompt. You MUST integrate this exact image into the application as the permanent official certificate template.
+
+The application must prioritize security, reliability, simplicity, and zero-cost or lowest-cost deployment options.
+
+==================================================
+
+1. PROJECT GOAL
+   ==================================================
+
+Create a private online portal for Quran academy teachers to manage students, recurring lesson schedules, international time zones, AI-generated educational images, and Quran memorization certificates.
+
+The application must:
+
+- Have a permanent HTTPS URL that teachers can access from anywhere.
+- Require an approved account to access private pages and data.
+- Include a real backend, persistent database, authentication, authorization, and secure file storage.
+- Work on mobile phones, tablets, and desktop computers.
+- Use Arabic as the primary language and support right-to-left layouts throughout.
+- Use a professional green-and-white visual identity inspired by أكاديمية ترتيل القرآن الكريم.
+- Avoid unnecessary complexity, clutter, and distracting animations.
+- Be designed for a nontechnical administrator.
+
+Do not build a frontend-only demo. Do not use mock authentication, fake database operations, or local browser storage as a substitute for a real backend.
+
+==================================================
+2. TECHNOLOGY AND COST REQUIREMENTS
+
+Choose a beginner-friendly architecture compatible with Google AI Studio Build and its supported deployment workflow.
+
+Preferred approach:
+
+- Frontend: React with TypeScript, or the framework best supported by the build environment.
+- Backend: secure server-side functions or API endpoints.
+- Database and authentication: Supabase with PostgreSQL and Supabase Auth, if compatible with the available environment and deployment plan.
+- File storage: private persistent storage for the official certificate template and any private generated files that must be retained.
+- Hosting: a suitable free-tier hosting option that provides a persistent URL and HTTPS.
+- Time zone conversion: a reliable library or built-in time zone database.
+- Certificate generation: programmatic image composition, not AI image regeneration.
+
+If a preferred service is unavailable or incompatible, explain the alternative before making architectural changes.
+
+FREE-FIRST POLICY:
+
+- Prefer free tiers and open-source libraries.
+- Do not enable paid services, paid upgrades, billing, or automatic charges without my explicit approval.
+- Check current free-tier limitations before recommending a provider.
+- Clearly explain any service that requires a payment method.
+- Do not promise that third-party free plans will remain free forever.
+- Include usage limits, cost-control measures, and a clear warning before any paid operation.
+- Do not add paid AI functionality when a normal programmatic solution can achieve the same result.
+
+==================================================
+3. APPLICATION DESIGN
+
+Create a clean, professional Arabic RTL interface.
+
+Visual identity:
+
+- Primary colors: dark green, medium green, and white.
+- Calm, professional Islamic educational aesthetic.
+- Readable Arabic typography.
+- Consistent spacing, cards, forms, tables, and navigation.
+- Responsive design for mobile and desktop.
+- Clear loading states, empty states, success messages, and error messages.
+- Avoid neon colors, unnecessary gradients, and excessive decoration.
+
+Create the following pages:
+
+1. Login.
+2. Teacher registration.
+3. Pending registration status.
+4. Admin dashboard.
+5. Teacher dashboard.
+6. Student management.
+7. Add/edit student form.
+8. Daily and weekly lesson schedule.
+9. AI educational image assistant.
+10. Certificate generation.
+11. Account settings.
+12. Password recovery.
+
+The navigation and dashboard must be in Arabic.
+
+==================================================
+4. AUTHENTICATION AND ACCOUNT APPROVAL
+
+Implement real authentication.
+
+Registration fields:
+
+- Full name.
+- Unique username.
+- Email address, where required for secure account recovery.
+- Password.
+- Confirm password.
+
+Registration workflow:
+
+- A new teacher submits a registration request.
+- The account starts in PENDING status.
+- Pending teachers cannot access protected dashboard pages or application data.
+- The administrator can approve or reject registration requests.
+- Approved accounts become active.
+- Rejected, suspended, or disabled accounts cannot sign in to the portal.
+- The teacher sees a clear message explaining the current registration status.
+
+Login requirements:
+
+- Login with username or email and password.
+- Remember Me option.
+- Secure persistent sessions where supported.
+- Forgot Password flow.
+- Secure logout.
+- Appropriate password requirements and protection against repeated failed login attempts.
+- Do not store plaintext passwords.
+- Do not implement custom password storage when a trusted authentication provider is available.
+
+Remember Me must never save the user's password in browser storage.
+
+ADMINISTRATOR:
+
+- Create a secure initial administrator setup process.
+- Never hardcode a default administrator password.
+- Do not expose administrator credentials in frontend code.
+- Only administrators can approve or reject teachers, manage the official certificate template, and access administrative controls.
+- Do not allow users to become administrators by editing their own profile or sending a modified request.
+
+==================================================
+5. ROLE-BASED ACCESS CONTROL
+
+Implement two roles:
+
+A. ADMIN
+
+- Approve and reject teacher registration requests.
+- Suspend or reactivate accounts.
+- View and manage teacher accounts.
+- Manage the official certificate template.
+- View system usage and basic administrative logs.
+- Configure system settings and AI usage limits.
+
+B. TEACHER
+
+- Manage their own students.
+- Create and edit their own lesson schedules.
+- View their daily and weekly calendar.
+- Generate certificates using the academy's official template.
+- Use the AI educational image assistant when enabled.
+- Manage their own account settings.
+
+DATA ISOLATION IS MANDATORY:
+Every student and lesson record must belong to the authenticated teacher who created it.
+
+Enforce ownership checks on the server and at the database level.
+
+Use PostgreSQL Row Level Security (RLS) policies or an equivalent robust database authorization mechanism.
+
+Teachers must never be able to view, modify, delete, or download another teacher's private student records by changing URLs, IDs, API requests, or frontend state.
+
+Never trust frontend role checks alone.
+
+==================================================
+6. STUDENT MANAGEMENT
+
+Build a student management system with these fields only:
+
+1. Student full name.
+2. Country.
+3. Student time zone.
+4. Lesson day or days.
+5. Lesson local time.
+6. Lesson duration, restricted to 30–40 minutes.
+7. Recurrence configuration for recurring weekly lessons.
+
+Do NOT add:
+
+- A separate teacher-in-charge field.
+- A notes field.
+- Unnecessary personal information.
+- Student payment information.
+
+The responsible teacher must be determined automatically from the authenticated account.
+
+Student management features:
+
+- Add a student.
+- Edit student details.
+- Search students by name.
+- View a student's lesson schedule.
+- Edit recurring schedules.
+- Archive a student without immediately destroying historical records.
+- Delete records only through an appropriate confirmation workflow and retention policy.
+- Validate required fields.
+- Prevent invalid durations outside the range of 30–40 minutes.
+- Prevent invalid lesson times and incomplete schedules.
+- Show understandable Arabic validation messages.
+
+Each teacher must see only their own students.
+
+==================================================
+7. AUTOMATIC LESSON SCHEDULING
+
+Implement a real recurring lesson scheduling system.
+
+Requirements:
+
+- Support weekly recurring lessons on selected days.
+- Support more than one weekly lesson per student.
+- Store the intended local time and the relevant IANA time zone.
+- Generate upcoming lesson occurrences correctly.
+- Display a daily schedule.
+- Display a weekly schedule.
+- Sort lessons chronologically.
+- Show the student name, lesson day, lesson time, and applicable time zones.
+- Allow teachers to edit schedules.
+- Support exceptions for individual dates without unintentionally changing every future occurrence.
+- Detect overlapping lessons for the same teacher.
+- Show a warning before confirming conflicting schedules.
+- Support schedule changes and cancellation of recurring lessons.
+- Preserve historical schedule information where appropriate.
+
+Lesson duration must always be between 30 and 40 minutes.
+
+Do not create a fake calendar containing hardcoded sample events in production.
+
+If demo data is used during development, clearly mark it as demo data and provide a way to remove it before production.
+
+==================================================
+8. INTERNATIONAL TIME ZONE CONVERSION
+
+Support at least these time zones:
+
+- Egypt: Africa/Cairo
+- Saudi Arabia: Asia/Riyadh
+- United Arab Emirates: Asia/Dubai
+
+Allow the teacher to select the student's country and time zone when adding a student.
+
+The system must:
+
+- Store the correct time zone identifier.
+- Display the original local lesson time.
+- Automatically convert the lesson time to Egypt time.
+- Display Saudi and UAE times when needed.
+- Allow the teacher to choose a preferred display time zone.
+- Keep the underlying scheduled occurrence consistent across all displayed time zones.
+- Handle date changes when a converted time falls on the previous or following day.
+- Handle daylight-saving time and official time zone rule changes.
+- Correctly distinguish the local wall-clock time of a recurring lesson from a single UTC timestamp.
+- Avoid using fixed hour offsets as the only time conversion method.
+
+For example, a lesson scheduled in Saudi Arabia at a particular local time must appear at the correct corresponding time in Egypt on the actual lesson date.
+
+Validate time conversion using multiple dates, including dates affected by daylight-saving changes.
+
+==================================================
+9. TEACHER DASHBOARD
+
+Create an Arabic dashboard showing:
+
+- Today's lessons.
+- Upcoming lessons.
+- Weekly lesson count.
+- A shortcut to add a student.
+- A shortcut to view the full schedule.
+- A shortcut to generate a certificate.
+- A shortcut to the AI image assistant.
+- Clear alerts for scheduling conflicts.
+- Account status where relevant.
+
+Do not display other teachers' student names or private records.
+
+Use real database data after integration. Clearly distinguish empty states from loading or failed database requests.
+
+==================================================
+10. OFFICIAL CERTIFICATE TEMPLATE — CRITICAL
+
+I am attaching the original certificate reference image with this prompt.
+
+THIS IMAGE IS THE OFFICIAL, PERMANENT CERTIFICATE TEMPLATE FOR THE ENTIRE ACADEMY.
+
+Use the actual uploaded image as the source file. Do not substitute a newly generated certificate.
+
+TEMPLATE OWNERSHIP:
+
+- The administrator supplies the reference image once during the initial build.
+- Integrate it into the application as a persistent official asset.
+- Store it in the project's appropriate asset directory or persistent storage, depending on the build and deployment environment.
+- Do not rely on a temporary chat attachment URL, expiring URL, browser-only file, or temporary preview.
+- If persistent storage requires manual setup, explain the steps to me in simple language.
+- All approved teachers must use the same official template.
+- Teachers must not need to upload the certificate themselves.
+- Only the administrator can replace the official template.
+
+EXACT DESIGN PRESERVATION:
+
+- Preserve the original background, dimensions, colors, borders, ornaments, logo, academy branding, and fixed text.
+- Do not redesign the template.
+- Do not generate a visually similar replacement.
+- Do not use an image-generation model to recreate the certificate.
+- Do not alter fixed artwork when placing the student's name or achievement.
+- Do not distort the image or unnecessarily change its aspect ratio.
+- If the original file cannot be extracted or saved correctly, stop and explain the required manual step instead of silently substituting another image.
+
+CERTIFICATE GENERATION INTERFACE:
+Create a page titled "إنشاء شهادة تقدير".
+
+The teacher must enter exactly two required fields:
+
+1. اسم الطالب أو الطالبة
+2. ما أتم حفظه من القرآن الكريم
+
+Provide a button labeled "إنشاء الشهادة".
+
+After submission:
+
+- Validate both fields.
+- Load the official template.
+- Overlay the entered student name and memorization achievement programmatically.
+- Show a preview of the completed certificate.
+- Provide a high-quality PNG download.
+- Provide a print-ready PDF download if feasible.
+- Provide an option to create another certificate.
+
+TEXT PLACEMENT:
+
+- Use the exact template as the background.
+- Define configurable coordinates for the variable text fields.
+- Keep the student's name and achievement inside their intended regions.
+- Use a suitable Arabic font.
+- Render Arabic right-to-left with correct shaping and letter joining.
+- Handle long names and long achievement descriptions without clipping or overlapping fixed elements.
+- Adjust font size within reasonable bounds when necessary.
+- Do not add unrequested dates, signatures, names, Quranic verses, or achievements.
+- Do not alter the text the teacher entered except for safe whitespace normalization.
+
+ADMIN TEMPLATE SETTINGS:
+
+- Allow the administrator to replace the template in a protected settings page.
+- Allow the administrator to configure the name and achievement positions.
+- Preserve the previous template version where practical.
+- Do not expose private storage credentials or unrestricted template-upload permissions to teachers.
+
+CERTIFICATE ACCEPTANCE TEST:
+Generate at least two test certificates using different Arabic names and different memorization achievements.
+
+Verify that:
+
+- The background and fixed artwork remain identical to the original reference.
+- Only the configured variable fields change.
+- Arabic text is rendered correctly.
+- Long names remain inside the certificate boundaries.
+- PNG downloads work.
+- PDF downloads work if implemented.
+- All approved teachers can use the same template.
+- The template remains available after deployment and application restart.
+
+Do not declare this feature complete until the original reference image is genuinely integrated and used by the certificate-generation code.
+
+==================================================
+11. AI EDUCATIONAL IMAGE ASSISTANT
+
+Create a page called "مساعد الصور الذكي".
+
+The interface should allow a teacher to:
+
+- Enter an Arabic description of an educational image.
+- Generate a new image.
+- Preview the result.
+- Retry with a revised prompt.
+- Download the generated image.
+- Optionally save generated images when persistent storage is configured.
+
+Example request:
+"أنشئ صورة تعليمية لطفل تشرح قصة سورة الفيل بأسلوب مناسب للأطفال، وبألوان متناسقة مع هوية أكاديمية ترتيل القرآن الكريم."
+
+AI PROVIDER REQUIREMENTS:
+
+- Prefer a genuinely available free tier or the lowest-cost suitable service.
+- Verify current API availability, model capabilities, and free usage limits before integration.
+- Do not assume an API is free just because its website offers a free chat interface.
+- Do not expose API keys in frontend code.
+- Call external AI services through a secure server-side endpoint.
+- Apply request limits, authentication checks, and abuse protection.
+- Display a clear message when a usage limit is reached.
+- Do not silently switch to a paid provider.
+- Do not activate billing or incur charges without my explicit permission.
+- Make the AI provider configurable so it can be replaced later.
+- If no suitable free image generation API is available, keep the interface ready and explain the limitation instead of pretending image generation works.
+
+RELIGIOUS CONTENT:
+
+- Avoid depicting angels or sacred figures.
+- Avoid generating unverified Quranic text inside images.
+- Where Quranic verses are needed, use verified source text and programmatic text rendering.
+- Keep imagery appropriate for children and the academy's educational purpose.
+
+==================================================
+12. DATABASE STRUCTURE
+
+Create a properly relational database with appropriate foreign keys, constraints, indexes, and timestamps.
+
+Suggested tables:
+
+1. profiles
+   
+   - User ID.
+   - Full name.
+   - Username.
+   - Role.
+   - Account status.
+   - Created timestamp.
+
+2. students
+   
+   - Student ID.
+   - Owner teacher ID.
+   - Student name.
+   - Country.
+   - Time zone.
+   - Created timestamp.
+   - Updated timestamp.
+
+3. lessons
+   
+   - Lesson ID.
+   - Student ID.
+   - Owner teacher ID.
+   - Day-of-week or recurrence definition.
+   - Local lesson time.
+   - Time zone identifier.
+   - Duration.
+   - Recurrence status.
+
+4. lesson_exceptions
+   
+   - Lesson ID.
+   - Specific occurrence date.
+   - Exception type.
+   - Modified schedule data when required.
+
+5. certificate_templates
+   
+   - Template ID.
+   - Persistent file reference.
+   - Version.
+   - Active status.
+   - Configured text positions.
+
+6. generated_certificates
+   
+   - Certificate ID.
+   - Owner teacher ID.
+   - Student name.
+   - Memorization achievement.
+   - Template version.
+   - Created timestamp.
+   - Private file reference, if saved.
+
+7. ai_usage_logs
+   
+   - Teacher ID.
+   - Provider.
+   - Request status.
+   - Usage information.
+   - Timestamp.
+
+8. audit_logs
+   
+   - Relevant administrator actions.
+   - Account approval and suspension events.
+   - Template replacement events.
+   - Timestamp and actor ID.
+
+Use the authentication provider's user ID as the identity reference. Do not store passwords in application tables.
+
+Do not create unnecessary tables or collect unnecessary personal information.
+
+==================================================
+13. SECURITY AND PRIVACY
+
+Security is a mandatory requirement, not an optional improvement.
+
+Implement:
+
+- HTTPS.
+- Secure authentication sessions.
+- Server-side authorization.
+- Database-level row access policies.
+- Input validation.
+- Protection against SQL injection through safe database access methods.
+- Appropriate request rate limiting.
+- Secure password recovery.
+- Restricted file access.
+- Safe handling of uploaded images.
+- Server-side secrets management.
+- Audit logging for important administrative operations.
+- A documented backup and recovery process.
+
+Never:
+
+- Expose service-role database keys to the browser.
+- Put secret API keys into public environment variables.
+- Allow teachers to modify their own roles.
+- Trust a teacher ID supplied by the browser without verifying ownership.
+- Allow pending accounts to access private data.
+- Treat an unlisted URL as sufficient authentication.
+- Claim security is complete without testing authorization rules.
+
+Use a private storage bucket for private files where appropriate. Use short-lived signed download URLs or authenticated server-side downloads when needed.
+
+Minimize student data sent to external AI providers. Do not send private student records to AI services unless necessary and appropriately protected.
+
+==================================================
+14. BACKUPS AND DATA RETENTION
+
+Implement or document:
+
+- Regular database backups using an available supported method.
+- An independent backup export where feasible.
+- Recovery instructions understandable to a beginner.
+- A process to export student and lesson records.
+- A clear retention policy for generated files and logs.
+- A way to delete obsolete generated images.
+- A way to preserve historical certificate records when required.
+
+Do not assume a free hosting plan automatically provides all necessary backup protection.
+
+Explain which backup steps are automatic and which require my manual action.
+
+==================================================
+15. DEPLOYMENT AND PERSISTENCE
+
+Prepare the application for deployment with a stable HTTPS URL.
+
+Requirements:
+
+- Persistent database.
+- Persistent official certificate template.
+- Secure environment configuration.
+- Clear separation between development and production settings.
+- Database schema and migration instructions.
+- Secure initial administrator creation.
+- No hardcoded secrets.
+- No automatic paid upgrade.
+- No deployment until I explicitly approve it.
+
+Explain that a private application is still hosted online when teachers access it from different countries. The application must not be publicly accessible without authentication.
+
+Before deployment, verify:
+
+- Login works.
+- Registration approval works.
+- Student records persist.
+- Lesson schedules persist.
+- Time-zone conversion works.
+- Certificate generation uses the actual attached reference.
+- Teacher data isolation works.
+- The application can recover from expected errors.
+
+If Google AI Studio cannot directly configure a required external service, give me precise step-by-step instructions, with the exact dashboard page and configuration fields to use. Never claim an external service is connected until it has actually been configured and tested.
+
+==================================================
+16. TESTING AND ACCEPTANCE CRITERIA
+
+Create a practical test checklist.
+
+Test cases must include:
+
+- Registering a new teacher.
+- Preventing a pending teacher from logging in to protected pages.
+- Approving and rejecting registration requests.
+- Signing in and out.
+- Password recovery.
+- Creating and editing student records.
+- Preventing one teacher from reading another teacher's records.
+- Rejecting lesson durations below 30 minutes or above 40 minutes.
+- Correctly generating weekly recurring schedules.
+- Converting times among Egypt, Saudi Arabia, and UAE.
+- Detecting overlapping lessons.
+- Generating Arabic certificates from the attached reference.
+- Downloading certificates.
+- Handling unavailable AI providers.
+- Preventing unauthorized file access.
+- Verifying that no paid service is activated unexpectedly.
+
+Use synthetic test data only. Do not invent real teacher accounts or use real student information during testing.
+
+Fix detected errors before declaring the application ready.
+
+==================================================
+17. DEVELOPMENT WORKFLOW FOR A NONTECHNICAL OWNER
+
+I cannot write code. You must handle implementation through the available build tools wherever possible.
+
+Work in the following order:
+
+PHASE 1:
+Build the complete Arabic RTL frontend, navigation, forms, dashboards, and page layouts.
+
+PHASE 2:
+Implement the real database, authentication, teacher registration approval, and authorization policies.
+
+PHASE 3:
+Implement student management and recurring schedules.
+
+PHASE 4:
+Implement accurate time-zone conversion and conflict detection.
+
+PHASE 5:
+Integrate the actual uploaded certificate reference and implement programmatic Arabic text overlays and downloads.
+
+PHASE 6:
+Add the AI image assistant only after identifying a suitable provider and verifying its cost and setup requirements.
+
+PHASE 7:
+Test the application, fix errors, prepare backups, and guide me through deployment.
+
+At the end of each phase:
+
+- Summarize what has actually been implemented.
+- List anything that still requires external configuration.
+- Give me the next simple action to perform.
+- Do not claim a feature works until it has been tested.
+- Do not ask me to edit code manually when you can implement the change directly.
+- If manual setup is unavoidable, give exact instructions for a beginner.
+
+Start building the application now. First inspect the uploaded certificate reference, then create the project structure and frontend. Preserve the reference as the official certificate asset and do not substitute another design.
+
+IMPORTANT: Do not publish or deploy the application, activate billing, or create a paid resource without my explicit approval.
