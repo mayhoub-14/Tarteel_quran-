@@ -562,6 +562,9 @@ class Database {
   private isSyncing = false;
 
   private saveLocal(): void {
+    // Vercel deployment files are immutable. Firestore is the production source
+    // of truth; never attempt to persist mutable state into /var/task.
+    if (process.env.VERCEL === '1') return;
     ensureDataDirectory();
     try {
       const serialized = JSON.stringify(this.data, null, 2);
