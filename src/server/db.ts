@@ -434,23 +434,29 @@ class Database {
   private syncBlockReason: string | null = null;
 
   constructor() {
-    ensureDataDirectory();
-    // 1. Initial synchronous load from local JSON cache for fast boot
-    if (fs.existsSync(DB_FILE)) {
-      try {
-        const raw = fs.readFileSync(DB_FILE, 'utf8');
-        this.data = JSON.parse(raw);
-        if (!Array.isArray(this.data.payrollRequests)) {
-          this.data.payrollRequests = [];
+    // Vercel instances have an immutable, non-persistent filesystem. Never try
+    // to create/read a local database cache there; Firestore is authoritative.
+    if (process.env.VERCEL === '1') {
+      this.data = getInitialDatabase();
+    } else {
+      ensureDataDirectory();
+      // 1. Initial synchronous load from the persistent local JSON cache.
+      if (fs.existsSync(DB_FILE)) {
+        try {
+          const raw = fs.readFileSync(DB_FILE, 'utf8');
+          this.data = JSON.parse(raw);
+          if (!Array.isArray(this.data.payrollRequests)) {
+            this.data.payrollRequests = [];
+          }
+        } catch (err) {
+          console.error('Error reading database file, loading fallback:', err);
+          this.data = getInitialDatabase();
+          this.saveLocal();
         }
-      } catch (err) {
-        console.error('Error reading database file, loading fallback:', err);
+      } else {
         this.data = getInitialDatabase();
         this.saveLocal();
       }
-    } else {
-      this.data = getInitialDatabase();
-      this.saveLocal();
     }
 
     this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
@@ -480,8 +486,11 @@ class Database {
           const localStudentsCount = this.data.students?.length || 0;
           const cloudStudentsCount = inspection.data.students?.length || 0;
 
-          // If local has active students and cloud has zero students, do NOT blindly wipe local students
-          if (localStudentsCount > 0 && cloudStudentsCount === 0) {
+          // Only a persistent local database can be evidence of unsynced student data.
+          // On Vercel, this instance starts from an in-memory demo seed on every cold
+          // start; treating those seed students as real local records blocks a valid
+          // cloud database that intentionally contains zero students.
+          if (process.env.VERCEL !== '1' && localStudentsCount > 0 && cloudStudentsCount === 0) {
             this.isSyncBlocked = true;
             this.syncBlockReason = 'Ambiguous state: Local database contains active students while Firestore has 0 students. Halting auto-overwrite.';
             console.error(`[Firestore Safety Alert] ${this.syncBlockReason}`);
