@@ -30,8 +30,34 @@ export const firestoreDb: Firestore = getFirestore(adminApp, firebaseConfig.fire
 // operations used here (get/set/batch); no snapshot listeners are used server-side.
 firestoreDb.settings({ preferRest: true });
 
+function isTransientFirestoreError(error: any): boolean {
+  const code = String(error?.code || '').toUpperCase();
+  const message = String(error?.message || error || '').toLowerCase();
+  return ['UNAVAILABLE', 'DEADLINE_EXCEEDED', 'ABORTED', 'INTERNAL', 'UNKNOWN'].includes(code) ||
+    ['econnreset', 'epipe', 'socket hang up', 'connection reset', 'temporarily unavailable', '503'].some(term => message.includes(term));
+}
+
+async function withFirestoreRetry<T>(operation: () => Promise<T>, label: string, attempts = 4): Promise<T> {
+  let lastError: any;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      if (attempt === attempts || !isTransientFirestoreError(error)) throw error;
+      const delayMs = Math.min(250 * (2 ** (attempt - 1)), 2000);
+      console.warn(`[Firestore Retry] ${label} failed (attempt ${attempt}/${attempts}); retrying in ${delayMs}ms.`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError;
+}
+
 async function readCollection<T>(name: string): Promise<T[]> {
-  const snapshot = await firestoreDb.collection(name).get();
+  const snapshot = await withFirestoreRetry(
+    () => firestoreDb.collection(name).get(),
+    `read collection ${name}`
+  );
   return snapshot.docs.map(document => document.data() as T);
 }
 
@@ -104,7 +130,7 @@ export async function migrateDataToFirestore(sourceData?: DatabaseSchema): Promi
         batch.set(docRef, cleanItem, { merge: true });
       }
 
-      await batch.commit();
+      await withFirestoreRetry(() => batch.commit(), `commit migration batch ${colName}`);
       counts[countKey] += chunk.length;
     }
     details.push(`Successfully migrated ${counts[countKey]} records to collection '${colName}'.`);
@@ -145,7 +171,7 @@ export async function migrateDataToFirestore(sourceData?: DatabaseSchema): Promi
       _isDatabaseInitialized: true,
       lastUpdatedAt: new Date().toISOString()
     };
-    await settingsRef.set(settingsPayload, { merge: true });
+    await withFirestoreRetry(() => settingsRef.set(settingsPayload, { merge: true }), 'write settings');
     counts.settings = 1;
     details.push(`Successfully migrated settings with initialization marker to 'settings/global'.`);
   }
@@ -195,29 +221,21 @@ export async function inspectFirestoreDatabaseState(): Promise<FirestoreStateIns
       return await readCollection<T>(colName);
     }
 
-    const [
-      profiles,
-      students,
-      lessons,
-      lessonExceptions,
-      certificateTemplates,
-      generatedCertificates,
-      aiUsageLogs,
-      auditLogs,
-      payrollRequests,
-      settingsSnap
-    ] = await Promise.all([
-      getCollectionDocs<any>('profiles'),
-      getCollectionDocs<any>('students'),
-      getCollectionDocs<any>('lessons'),
-      getCollectionDocs<any>('lessonExceptions'),
-      getCollectionDocs<any>('certificateTemplates'),
-      getCollectionDocs<any>('generatedCertificates'),
-      getCollectionDocs<any>('aiUsageLogs'),
-      getCollectionDocs<any>('auditLogs'),
-      getCollectionDocs<any>('payrollRequests'),
-      firestoreDb.collection('settings').get()
-    ]);
+    // Query sequentially instead of opening ten REST requests at once. This avoids
+    // socket EPIPE bursts in short-lived Vercel serverless instances.
+    const profiles = await getCollectionDocs<any>('profiles');
+    const students = await getCollectionDocs<any>('students');
+    const lessons = await getCollectionDocs<any>('lessons');
+    const lessonExceptions = await getCollectionDocs<any>('lessonExceptions');
+    const certificateTemplates = await getCollectionDocs<any>('certificateTemplates');
+    const generatedCertificates = await getCollectionDocs<any>('generatedCertificates');
+    const aiUsageLogs = await getCollectionDocs<any>('aiUsageLogs');
+    const auditLogs = await getCollectionDocs<any>('auditLogs');
+    const payrollRequests = await getCollectionDocs<any>('payrollRequests');
+    const settingsSnap = await withFirestoreRetry(
+      () => firestoreDb.collection('settings').get(),
+      'read collection settings'
+    );
 
     const counts = {
       profiles: profiles.length,
@@ -366,7 +384,7 @@ export async function deleteLessonsFromFirestore(lessonIds: string[]): Promise<v
         batch.delete(firestoreDb.collection('lessons').doc(lid));
       }
     }
-    await batch.commit();
+    await withFirestoreRetry(() => batch.commit(), 'commit student and lesson deletion');
   }
 }
 
@@ -421,7 +439,7 @@ export async function commitIncrementalChangesToFirestore(
       }
     }
 
-    await batch.commit();
+    await withFirestoreRetry(() => batch.commit(), 'commit lesson deletion batch');
   }
 
   return { written: writtenCount, deleted: deletedCount };
