@@ -40,6 +40,19 @@ const JWT_SECRET: string = (() => {
 app.use(express.json({ limit: '15mb' }));
 app.use(cookieParser());
 
+// Do not let a request read or mutate the in-memory fallback while the first
+// authoritative Firestore inspection is still running. This closes the race
+// where a request mutation could be overwritten by the startup snapshot.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (!req.path.startsWith('/api/')) return next();
+  void db.waitForInitialization().then(() => next()).catch((error: any) => {
+    console.error('[API] Database initialization did not complete:', error);
+    if (!res.headersSent) {
+      res.status(503).json({ error: 'قاعدة البيانات لم تكتمل تهيئتها بعد. حاول مرة أخرى.' });
+    }
+  });
+});
+
 // All API JSON responses wait for pending Firestore writes. This prevents Vercel
 // from freezing a serverless request before the debounced background sync runs.
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -2261,9 +2274,14 @@ app.get('/api/admin/firestore-status', authenticate, requireAdmin, async (_req: 
       auditLogs: db.get().auditLogs.length,
       payrollRequests: db.get().payrollRequests.length
     };
+    const syncState = db.isSyncDisabled();
+    const inspection = db.getInspectionStatus();
     return res.json({
-      status: 'ONLINE',
+      status: isConnected ? 'ONLINE' : 'OFFLINE',
       firestoreConnected: isConnected,
+      syncBlocked: syncState.blocked,
+      syncBlockReason: syncState.reason,
+      inspectionStatus: inspection?.status || 'PENDING',
       database: 'ai-studio-tarteelteachersp-979b7e7b-89fe-4866-86e6-9f467b26704c',
       counts: currentCounts,
       lastChecked: new Date().toISOString()
