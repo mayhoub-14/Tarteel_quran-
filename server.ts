@@ -40,6 +40,26 @@ const JWT_SECRET: string = (() => {
 app.use(express.json({ limit: '15mb' }));
 app.use(cookieParser());
 
+// All API JSON responses wait for pending Firestore writes. This prevents Vercel
+// from freezing a serverless request before the debounced background sync runs.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const sendJson = res.json.bind(res);
+  (res as any).json = (body: any) => {
+    if (!req.path.startsWith('/api/')) return sendJson(body);
+    void db.saveAndSync().then(() => {
+      sendJson(body);
+    }).catch((error: any) => {
+      console.error('[API] Firestore persistence failed; refusing success response:', error);
+      if (!res.headersSent) {
+        res.status(503);
+        sendJson({ error: 'تعذر حفظ التغييرات في قاعدة البيانات. لم يتم تأكيد العملية، حاول مرة أخرى.' });
+      }
+    });
+    return res;
+  };
+  next();
+});
+
 // Serve static assets from public folder
 app.use(express.static(path.resolve(process.cwd(), 'public')));
 

@@ -425,6 +425,8 @@ function getInitialDatabase(): DatabaseSchema {
 
 class Database {
   private data: DatabaseSchema;
+  private lastSnapshot: DatabaseSchema;
+  private initPromise: Promise<void> = Promise.resolve();
   private isFirestoreConnected: boolean = false;
   private firestoreInspection: FirestoreStateInspection | null = null;
   private syncTimeout: NodeJS.Timeout | null = null;
@@ -451,8 +453,9 @@ class Database {
       this.saveLocal();
     }
 
+    this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
     // 2. Asynchronously initialize and synchronize with live Firestore
-    this.initFirestore();
+    this.initPromise = this.initFirestore();
   }
 
   /**
@@ -487,6 +490,7 @@ class Database {
 
           // Cloud is fully verified: safely load cloud data into memory and update local cache
           this.data = inspection.data;
+          this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
           this.isFirestoreConnected = true;
           this.isSyncBlocked = false;
           this.syncBlockReason = null;
@@ -611,11 +615,61 @@ class Database {
     });
   }
 
+  private trackDatabaseDiff(): void {
+    const collections: FirestoreCollectionName[] = [
+      'profiles', 'students', 'lessons', 'lessonExceptions',
+      'certificateTemplates', 'generatedCertificates', 'payrollRequests',
+      'aiUsageLogs', 'auditLogs'
+    ];
+    for (const collection of collections) {
+      const previous = new Map<string, any>(((this.lastSnapshot as any)[collection] || []).map((item: any) => [item.id, item]));
+      const current = new Map<string, any>(((this.data as any)[collection] || []).map((item: any) => [item.id, item]));
+      for (const [id, item] of current) {
+        const oldItem = previous.get(id);
+        if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(item)) this.recordChange(collection, id, item);
+      }
+      for (const id of previous.keys()) if (!current.has(id)) this.recordDeletion(collection, id);
+    }
+    if (JSON.stringify(this.lastSnapshot.settings) !== JSON.stringify(this.data.settings)) {
+      this.recordChange('settings', 'system', this.data.settings);
+    }
+    this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
+  }
+
+  /** Wait for Firestore confirmation before an API response reports success. */
+  public async saveAndSync(): Promise<void> {
+    await this.initPromise;
+    this.trackDatabaseDiff();
+    if (this.pendingChanges.size === 0) return;
+    this.saveLocal();
+    if (this.syncTimeout) { clearTimeout(this.syncTimeout); this.syncTimeout = null; }
+    if (this.isSyncBlocked) throw new Error(`Firestore sync blocked: ${this.syncBlockReason || 'unknown state'}`);
+    while (this.isSyncing) await new Promise(resolve => setTimeout(resolve, 25));
+    if (this.pendingChanges.size === 0) return;
+    this.isSyncing = true;
+    const changes = Array.from(this.pendingChanges.values());
+    try {
+      await commitIncrementalChangesToFirestore(changes);
+      for (const change of changes) {
+        const key = `${change.collection}:${change.id}`;
+        const queued = this.pendingChanges.get(key);
+        if (queued && queued.timestamp <= change.timestamp) this.pendingChanges.delete(key);
+      }
+      this.isFirestoreConnected = true;
+    } catch (error) {
+      console.error('[Firestore] Request-time persistence failed:', error);
+      throw error;
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
   /**
    * Saves local JSON atomically and schedules debounced incremental push to Firestore.
    * Optionally tracks a specific changed or deleted document.
    */
   public save(change?: { collection: FirestoreCollectionName; id: string; op?: 'SET' | 'DELETE'; data?: any }): void {
+    this.trackDatabaseDiff();
     // 1. Immediately update local JSON file & backup
     this.saveLocal();
 
@@ -696,6 +750,7 @@ class Database {
       const inspection = await inspectFirestoreDatabaseState();
       if (inspection.status === 'FULLY_INITIALIZED' && inspection.data) {
         this.data = inspection.data;
+        this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
         this.isFirestoreConnected = true;
         this.isSyncBlocked = false;
         this.syncBlockReason = null;
