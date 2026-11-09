@@ -25,6 +25,10 @@ function createAdminApp() {
 
 const adminApp = createAdminApp();
 export const firestoreDb: Firestore = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId);
+// Vercel's serverless network is timing out on the Firebase client SDK's gRPC
+// transport. The Admin SDK can use Firestore's HTTP/1.1 REST fallback for all
+// operations used here (get/set/batch); no snapshot listeners are used server-side.
+firestoreDb.settings({ preferRest: true });
 
 async function readCollection<T>(name: string): Promise<T[]> {
   const snapshot = await firestoreDb.collection(name).get();
