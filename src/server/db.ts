@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs';
 import {
   firestoreDb,
   migrateDataToFirestore,
-  loadDatabaseFromFirestore,
   loadFirestoreCollections,
   inspectFirestoreDatabaseState,
   commitIncrementalChangesToFirestore
