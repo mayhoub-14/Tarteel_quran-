@@ -592,7 +592,7 @@ app.post('/api/students', authenticate, requireApproved, (req: AuthenticatedRequ
   for (const sched of schedules) {
     const day = Number(sched?.dayOfWeek);
     const time = String(sched?.localTime || '');
-    if (!Number.isInteger(day) || day < 0 || day > 6 || !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)) {
+    if (!Number.isInteger(day) || day < 0 || day > 6 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
       return res.status(400).json({ error: 'يوجد موعد غير صحيح. تأكد من اختيار يوم ووقت صالح لكل حلقة.' });
     }
   }
