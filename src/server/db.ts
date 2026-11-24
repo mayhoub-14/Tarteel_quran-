@@ -654,38 +654,48 @@ class Database {
    */
   public recordChange(collection: FirestoreCollectionName, id: string, data?: any): void {
     const key = `${collection}:${id}`;
-    // If not explicitly provided, resolve from memory
     let resolvedData = data;
     if (!resolvedData && collection !== 'settings') {
       const list = (this.data as any)[collection];
-      if (Array.isArray(list)) {
-        resolvedData = list.find((item: any) => item.id === id);
-      }
+      if (Array.isArray(list)) resolvedData = list.find((item: any) => item.id === id);
     } else if (!resolvedData && collection === 'settings') {
       resolvedData = this.data.settings;
     }
 
-    if (resolvedData) {
-      this.pendingChanges.set(key, {
-        collection,
-        id,
-        op: 'SET',
-        data: resolvedData,
-        timestamp: Date.now()
-      });
-    }
+    if (!resolvedData) return;
+
+    const queued = this.pendingChanges.get(key);
+    const previous = collection === 'settings'
+      ? this.lastSnapshot.settings
+      : ((this.lastSnapshot as any)[collection] || []).find((item: any) => item.id === id);
+
+    this.pendingChanges.set(key, {
+      collection,
+      id,
+      op: 'SET',
+      data: resolvedData,
+      expectedExists: queued?.expectedExists ?? Boolean(previous),
+      expectedData: queued?.expectedData ?? previous,
+      timestamp: Date.now()
+    });
   }
 
   /**
-   * Records an explicit deletion operation for a specific document.
-   * Overrides any prior pending SET for this document so it won't be re-created.
+   * Records a deletion while retaining the original snapshot used for conflict detection.
    */
   public recordDeletion(collection: FirestoreCollectionName, id: string): void {
     const key = `${collection}:${id}`;
+    const queued = this.pendingChanges.get(key);
+    const previous = collection === 'settings'
+      ? this.lastSnapshot.settings
+      : ((this.lastSnapshot as any)[collection] || []).find((item: any) => item.id === id);
+
     this.pendingChanges.set(key, {
       collection,
       id,
       op: 'DELETE',
+      expectedExists: queued?.expectedExists ?? Boolean(previous),
+      expectedData: queued?.expectedData ?? previous,
       timestamp: Date.now()
     });
   }
