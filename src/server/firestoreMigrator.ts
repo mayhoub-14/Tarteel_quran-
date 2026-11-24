@@ -1,15 +1,85 @@
 import fs from 'fs';
 import path from 'path';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDocsFromServer, collection, writeBatch, deleteDoc } from 'firebase/firestore';
+import { initializeApp, cert, applicationDefault, getApps } from 'firebase-admin/app';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import type { DatabaseSchema } from './db.ts';
 
 const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
 const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-// Initialize Firebase App
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-export const firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+function createAdminApp() {
+  if (getApps().length > 0) return getApps()[0];
+  const rawCredentials = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (rawCredentials) {
+    let serviceAccount: any;
+    try {
+      serviceAccount = JSON.parse(rawCredentials);
+    } catch {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.');
+    }
+    if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    return initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.project_id || firebaseConfig.projectId });
+  }
+  return initializeApp({ credential: applicationDefault(), projectId: firebaseConfig.projectId });
+}
+
+const adminApp = createAdminApp();
+export const firestoreDb: Firestore = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId);
+// Vercel's serverless network is timing out on the Firebase client SDK's gRPC
+// transport. The Admin SDK can use Firestore's HTTP/1.1 REST fallback for all
+// operations used here (get/set/batch); no snapshot listeners are used server-side.
+firestoreDb.settings({ preferRest: true });
+
+function isTransientFirestoreError(error: any): boolean {
+  const code = String(error?.code || '').toUpperCase();
+  const message = String(error?.message || error || '').toLowerCase();
+  return ['UNAVAILABLE', 'DEADLINE_EXCEEDED', 'ABORTED', 'INTERNAL', 'UNKNOWN'].includes(code) ||
+    ['econnreset', 'epipe', 'socket hang up', 'connection reset', 'temporarily unavailable', '503'].some(term => message.includes(term));
+}
+
+async function withFirestoreRetry<T>(operation: () => Promise<T>, label: string, attempts = 4): Promise<T> {
+  let lastError: any;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      if (attempt === attempts || !isTransientFirestoreError(error)) throw error;
+      const delayMs = Math.min(250 * (2 ** (attempt - 1)), 2000);
+      console.warn(`[Firestore Retry] ${label} failed (attempt ${attempt}/${attempts}); retrying in ${delayMs}ms.`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError;
+}
+
+async function readCollection<T>(name: string): Promise<T[]> {
+  const snapshot = await withFirestoreRetry(
+    () => firestoreDb.collection(name).get(),
+    `read collection ${name}`
+  );
+  return snapshot.docs.map(document => document.data() as T);
+}
+
+/** Read only the requested collections to keep request-time refreshes bounded. */
+export async function loadFirestoreCollections(
+  names: FirestoreCollectionName[]
+): Promise<Partial<DatabaseSchema>> {
+  const result: Partial<DatabaseSchema> = {};
+  for (const name of [...new Set(names)]) {
+    if (name === 'settings') {
+      const snapshot = await withFirestoreRetry(
+        () => firestoreDb.collection('settings').doc('global').get(),
+        'read settings/global'
+      );
+      if (!snapshot.exists) throw new Error('Firestore settings/global document is missing.');
+      result.settings = snapshot.data() as DatabaseSchema['settings'];
+    } else {
+      (result as any)[name] = await readCollection<any>(name);
+    }
+  }
+  return result;
+}
 
 export interface MigrationReport {
   timestamp: string;
@@ -70,17 +140,17 @@ export async function migrateDataToFirestore(sourceData?: DatabaseSchema): Promi
     const chunkSize = 400;
     for (let i = 0; i < items.length; i += chunkSize) {
       const chunk = items.slice(i, i + chunkSize);
-      const batch = writeBatch(firestoreDb);
+      const batch = firestoreDb.batch();
 
       for (const item of chunk) {
         const docId = item.id || `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        const docRef = doc(firestoreDb, colName, docId);
+        const docRef = firestoreDb.collection(colName).doc(docId);
         // Clean undefined properties for Firestore compatibility
         const cleanItem = JSON.parse(JSON.stringify(item));
         batch.set(docRef, cleanItem, { merge: true });
       }
 
-      await batch.commit();
+      await withFirestoreRetry(() => batch.commit(), `commit migration batch ${colName}`);
       counts[countKey] += chunk.length;
     }
     details.push(`Successfully migrated ${counts[countKey]} records to collection '${colName}'.`);
@@ -115,13 +185,13 @@ export async function migrateDataToFirestore(sourceData?: DatabaseSchema): Promi
 
   // 10. Settings
   if (data.settings) {
-    const settingsRef = doc(firestoreDb, 'settings', 'global');
+    const settingsRef = firestoreDb.collection('settings').doc('global');
     const settingsPayload = {
       ...JSON.parse(JSON.stringify(data.settings)),
       _isDatabaseInitialized: true,
       lastUpdatedAt: new Date().toISOString()
     };
-    await setDoc(settingsRef, settingsPayload, { merge: true });
+    await withFirestoreRetry(() => settingsRef.set(settingsPayload, { merge: true }), 'write settings');
     counts.settings = 1;
     details.push(`Successfully migrated settings with initialization marker to 'settings/global'.`);
   }
@@ -168,33 +238,24 @@ export interface FirestoreStateInspection {
 export async function inspectFirestoreDatabaseState(): Promise<FirestoreStateInspection> {
   try {
     async function getCollectionDocs<T>(colName: string): Promise<T[]> {
-      const snap = await getDocsFromServer(collection(firestoreDb, colName));
-      return snap.docs.map(d => d.data() as T);
+      return await readCollection<T>(colName);
     }
 
-    const [
-      profiles,
-      students,
-      lessons,
-      lessonExceptions,
-      certificateTemplates,
-      generatedCertificates,
-      aiUsageLogs,
-      auditLogs,
-      payrollRequests,
-      settingsSnap
-    ] = await Promise.all([
-      getCollectionDocs<any>('profiles'),
-      getCollectionDocs<any>('students'),
-      getCollectionDocs<any>('lessons'),
-      getCollectionDocs<any>('lessonExceptions'),
-      getCollectionDocs<any>('certificateTemplates'),
-      getCollectionDocs<any>('generatedCertificates'),
-      getCollectionDocs<any>('aiUsageLogs'),
-      getCollectionDocs<any>('auditLogs'),
-      getCollectionDocs<any>('payrollRequests'),
-      getDocsFromServer(collection(firestoreDb, 'settings'))
-    ]);
+    // Query sequentially instead of opening ten REST requests at once. This avoids
+    // socket EPIPE bursts in short-lived Vercel serverless instances.
+    const profiles = await getCollectionDocs<any>('profiles');
+    const students = await getCollectionDocs<any>('students');
+    const lessons = await getCollectionDocs<any>('lessons');
+    const lessonExceptions = await getCollectionDocs<any>('lessonExceptions');
+    const certificateTemplates = await getCollectionDocs<any>('certificateTemplates');
+    const generatedCertificates = await getCollectionDocs<any>('generatedCertificates');
+    const aiUsageLogs = await getCollectionDocs<any>('aiUsageLogs');
+    const auditLogs = await getCollectionDocs<any>('auditLogs');
+    const payrollRequests = await getCollectionDocs<any>('payrollRequests');
+    const settingsSnap = await withFirestoreRetry(
+      () => firestoreDb.collection('settings').get(),
+      'read collection settings'
+    );
 
     const counts = {
       profiles: profiles.length,
@@ -206,7 +267,7 @@ export async function inspectFirestoreDatabaseState(): Promise<FirestoreStateIns
       aiUsageLogs: aiUsageLogs.length,
       auditLogs: auditLogs.length,
       payrollRequests: payrollRequests.length,
-      settings: settingsSnap.docs.length
+      settings: settingsSnap.size
     };
 
     const totalDocs = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -228,7 +289,7 @@ export async function inspectFirestoreDatabaseState(): Promise<FirestoreStateIns
 
     // Case 2: Fully initialized database
     // Requires: Valid profiles array, at least one active Admin profile, and settings document
-    if (profiles.length > 0 && hasAdminProfile && (hasInitializedMarker || settingsSnap.docs.length > 0)) {
+    if (profiles.length > 0 && hasAdminProfile && (hasInitializedMarker || settingsSnap.size > 0)) {
       const settingsData = globalDoc || {
         academyName: 'أكاديمية ترتيل القرآن الكريم',
         allowPublicTeacherRegistration: true,
@@ -310,21 +371,21 @@ export async function deleteStudentWithLessonsFromFirestore(
   studentId: string,
   associatedLessonIds: string[] = []
 ): Promise<void> {
-  const batch = writeBatch(firestoreDb);
+  const batch = firestoreDb.batch();
 
   // 1. Delete student document
-  const studentRef = doc(firestoreDb, 'students', studentId);
+  const studentRef = firestoreDb.collection('students').doc(studentId);
   batch.delete(studentRef);
 
   // 2. Delete all associated lesson documents
   for (const lessonId of associatedLessonIds) {
     if (lessonId) {
-      const lessonRef = doc(firestoreDb, 'lessons', lessonId);
+      const lessonRef = firestoreDb.collection('lessons').doc(lessonId);
       batch.delete(lessonRef);
     }
   }
 
-  await batch.commit();
+  await withFirestoreRetry(() => batch.commit(), 'delete student and associated lessons');
 }
 
 /**
@@ -337,13 +398,13 @@ export async function deleteLessonsFromFirestore(lessonIds: string[]): Promise<v
   const chunkSize = 400;
   for (let i = 0; i < lessonIds.length; i += chunkSize) {
     const chunk = lessonIds.slice(i, i + chunkSize);
-    const batch = writeBatch(firestoreDb);
+    const batch = firestoreDb.batch();
     for (const lid of chunk) {
       if (lid) {
-        batch.delete(doc(firestoreDb, 'lessons', lid));
+        batch.delete(firestoreDb.collection('lessons').doc(lid));
       }
     }
-    await batch.commit();
+    await withFirestoreRetry(() => batch.commit(), 'commit lesson deletion batch');
   }
 }
 
@@ -364,7 +425,18 @@ export interface IncrementalChange {
   id: string;
   op: 'SET' | 'DELETE';
   data?: any;
+  /** Snapshot this write was based on; used to reject stale concurrent writes. */
+  expectedExists: boolean;
+  expectedData?: any;
   timestamp: number;
+}
+
+function stableFirestoreValue(value: any): string {
+  if (Array.isArray(value)) return '[' + value.map(stableFirestoreValue).join(',') + ']';
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + stableFirestoreValue(value[key])).join(',') + '}';
+  }
+  return JSON.stringify(value);
 }
 
 /**
@@ -374,31 +446,46 @@ export interface IncrementalChange {
 export async function commitIncrementalChangesToFirestore(
   changes: IncrementalChange[]
 ): Promise<{ written: number; deleted: number }> {
-  if (!changes || changes.length === 0) {
-    return { written: 0, deleted: 0 };
-  }
+  if (!changes || changes.length === 0) return { written: 0, deleted: 0 };
 
   let writtenCount = 0;
   let deletedCount = 0;
-  const chunkSize = 400; // Under Firestore's 500 max batch size
+  const chunkSize = 400;
 
   for (let i = 0; i < changes.length; i += chunkSize) {
     const chunk = changes.slice(i, i + chunkSize);
-    const batch = writeBatch(firestoreDb);
+    await withFirestoreRetry(() => firestoreDb.runTransaction(async transaction => {
+      const refs = chunk.map(change => firestoreDb.collection(change.collection).doc(change.id));
+      // Firestore requires all transaction reads to happen before writes.
+      const snapshots = await Promise.all(refs.map(ref => transaction.get(ref)));
 
-    for (const change of chunk) {
-      const docRef = doc(firestoreDb, change.collection, change.id);
-      if (change.op === 'DELETE') {
-        batch.delete(docRef);
-        deletedCount++;
-      } else if (change.op === 'SET' && change.data) {
-        const cleanData = JSON.parse(JSON.stringify(change.data));
-        batch.set(docRef, cleanData, { merge: true });
-        writtenCount++;
-      }
-    }
+      chunk.forEach((change, index) => {
+        const snapshot = snapshots[index];
+        if (change.expectedExists) {
+          if (!snapshot.exists || stableFirestoreValue(snapshot.data()) !== stableFirestoreValue(change.expectedData)) {
+            const conflict: any = new Error('Concurrent update detected for ' + change.collection + '/' + change.id + '; refusing to overwrite newer data.');
+            conflict.code = 'FAILED_PRECONDITION';
+            throw conflict;
+          }
+        } else if (snapshot.exists) {
+          const conflict: any = new Error('Concurrent create detected for ' + change.collection + '/' + change.id + '; refusing to overwrite existing data.');
+          conflict.code = 'FAILED_PRECONDITION';
+          throw conflict;
+        }
+      });
 
-    await batch.commit();
+      chunk.forEach((change, index) => {
+        const ref = refs[index];
+        if (change.op === 'DELETE') {
+          transaction.delete(ref);
+        } else if (change.op === 'SET' && change.data) {
+          const cleanData = JSON.parse(JSON.stringify(change.data));
+          transaction.set(ref, cleanData);
+        }
+      });
+    }), 'commit conflict-checked Firestore transaction');
+    writtenCount += chunk.filter(change => change.op === 'SET' && Boolean(change.data)).length;
+    deletedCount += chunk.filter(change => change.op === 'DELETE').length;
   }
 
   return { written: writtenCount, deleted: deletedCount };

@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import {
   firestoreDb,
   migrateDataToFirestore,
-  loadDatabaseFromFirestore,
+  loadFirestoreCollections,
   inspectFirestoreDatabaseState,
   commitIncrementalChangesToFirestore
 } from './firestoreMigrator.ts';
@@ -434,23 +434,29 @@ class Database {
   private syncBlockReason: string | null = null;
 
   constructor() {
-    ensureDataDirectory();
-    // 1. Initial synchronous load from local JSON cache for fast boot
-    if (fs.existsSync(DB_FILE)) {
-      try {
-        const raw = fs.readFileSync(DB_FILE, 'utf8');
-        this.data = JSON.parse(raw);
-        if (!Array.isArray(this.data.payrollRequests)) {
-          this.data.payrollRequests = [];
+    // Vercel instances have an immutable, non-persistent filesystem. Never try
+    // to create/read a local database cache there; Firestore is authoritative.
+    if (process.env.VERCEL === '1') {
+      this.data = getInitialDatabase();
+    } else {
+      ensureDataDirectory();
+      // 1. Initial synchronous load from the persistent local JSON cache.
+      if (fs.existsSync(DB_FILE)) {
+        try {
+          const raw = fs.readFileSync(DB_FILE, 'utf8');
+          this.data = JSON.parse(raw);
+          if (!Array.isArray(this.data.payrollRequests)) {
+            this.data.payrollRequests = [];
+          }
+        } catch (err) {
+          console.error('Error reading database file, loading fallback:', err);
+          this.data = getInitialDatabase();
+          this.saveLocal();
         }
-      } catch (err) {
-        console.error('Error reading database file, loading fallback:', err);
+      } else {
         this.data = getInitialDatabase();
         this.saveLocal();
       }
-    } else {
-      this.data = getInitialDatabase();
-      this.saveLocal();
     }
 
     this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
@@ -480,8 +486,11 @@ class Database {
           const localStudentsCount = this.data.students?.length || 0;
           const cloudStudentsCount = inspection.data.students?.length || 0;
 
-          // If local has active students and cloud has zero students, do NOT blindly wipe local students
-          if (localStudentsCount > 0 && cloudStudentsCount === 0) {
+          // Only a persistent local database can be evidence of unsynced student data.
+          // On Vercel, this instance starts from an in-memory demo seed on every cold
+          // start; treating those seed students as real local records blocks a valid
+          // cloud database that intentionally contains zero students.
+          if (process.env.VERCEL !== '1' && localStudentsCount > 0 && cloudStudentsCount === 0) {
             this.isSyncBlocked = true;
             this.syncBlockReason = 'Ambiguous state: Local database contains active students while Firestore has 0 students. Halting auto-overwrite.';
             console.error(`[Firestore Safety Alert] ${this.syncBlockReason}`);
@@ -568,6 +577,38 @@ class Database {
   /** Wait until the first authoritative Firestore inspection has completed. */
   public async waitForInitialization(): Promise<void> {
     await this.initPromise;
+
+    // On Vercel, the in-memory seed is never a valid fallback for production
+    // requests. If Firestore could not be authoritatively read or initialized,
+    // fail closed instead of exposing demo data or accepting writes that cannot
+    // be durably committed to the real database.
+    if (process.env.VERCEL === '1' && (!this.isFirestoreConnected || this.isSyncBlocked)) {
+      throw new Error(
+        this.syncBlockReason || 'Firestore is not connected; refusing to serve application data.'
+      );
+    }
+  }
+
+  /**
+   * Reload the authoritative shared database before cross-instance operations.
+   * Flush this instance's queued writes first so a refresh cannot discard them.
+   */
+  public async refreshFromFirestore(collections: FirestoreCollectionName[]): Promise<void> {
+    await this.waitForInitialization();
+    await this.saveAndSync();
+
+    const refreshed = await loadFirestoreCollections(collections);
+    for (const collection of collections) {
+      const value = (refreshed as any)[collection];
+      if (value === undefined) throw new Error(`Firestore refresh returned no data for ${collection}.`);
+      (this.data as any)[collection] = value;
+    }
+
+    this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
+    this.isFirestoreConnected = true;
+    this.isSyncBlocked = false;
+    this.syncBlockReason = null;
+    this.saveLocal();
   }
 
   public get(): DatabaseSchema {
@@ -613,38 +654,48 @@ class Database {
    */
   public recordChange(collection: FirestoreCollectionName, id: string, data?: any): void {
     const key = `${collection}:${id}`;
-    // If not explicitly provided, resolve from memory
     let resolvedData = data;
     if (!resolvedData && collection !== 'settings') {
       const list = (this.data as any)[collection];
-      if (Array.isArray(list)) {
-        resolvedData = list.find((item: any) => item.id === id);
-      }
+      if (Array.isArray(list)) resolvedData = list.find((item: any) => item.id === id);
     } else if (!resolvedData && collection === 'settings') {
       resolvedData = this.data.settings;
     }
 
-    if (resolvedData) {
-      this.pendingChanges.set(key, {
-        collection,
-        id,
-        op: 'SET',
-        data: resolvedData,
-        timestamp: Date.now()
-      });
-    }
+    if (!resolvedData) return;
+
+    const queued = this.pendingChanges.get(key);
+    const previous = collection === 'settings'
+      ? this.lastSnapshot.settings
+      : ((this.lastSnapshot as any)[collection] || []).find((item: any) => item.id === id);
+
+    this.pendingChanges.set(key, {
+      collection,
+      id,
+      op: 'SET',
+      data: resolvedData,
+      expectedExists: queued?.expectedExists ?? Boolean(previous),
+      expectedData: queued?.expectedData ?? previous,
+      timestamp: Date.now()
+    });
   }
 
   /**
-   * Records an explicit deletion operation for a specific document.
-   * Overrides any prior pending SET for this document so it won't be re-created.
+   * Records a deletion while retaining the original snapshot used for conflict detection.
    */
   public recordDeletion(collection: FirestoreCollectionName, id: string): void {
     const key = `${collection}:${id}`;
+    const queued = this.pendingChanges.get(key);
+    const previous = collection === 'settings'
+      ? this.lastSnapshot.settings
+      : ((this.lastSnapshot as any)[collection] || []).find((item: any) => item.id === id);
+
     this.pendingChanges.set(key, {
       collection,
       id,
       op: 'DELETE',
+      expectedExists: queued?.expectedExists ?? Boolean(previous),
+      expectedData: queued?.expectedData ?? previous,
       timestamp: Date.now()
     });
   }
@@ -665,7 +716,7 @@ class Database {
       for (const id of previous.keys()) if (!current.has(id)) this.recordDeletion(collection, id);
     }
     if (JSON.stringify(this.lastSnapshot.settings) !== JSON.stringify(this.data.settings)) {
-      this.recordChange('settings', 'system', this.data.settings);
+      this.recordChange('settings', 'global', this.data.settings);
     }
     this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
   }
