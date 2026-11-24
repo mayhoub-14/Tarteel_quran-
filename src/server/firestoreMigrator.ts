@@ -478,14 +478,14 @@ export async function commitIncrementalChangesToFirestore(
         const ref = refs[index];
         if (change.op === 'DELETE') {
           transaction.delete(ref);
-          deletedCount++;
         } else if (change.op === 'SET' && change.data) {
           const cleanData = JSON.parse(JSON.stringify(change.data));
           transaction.set(ref, cleanData);
-          writtenCount++;
         }
       });
     }), 'commit conflict-checked Firestore transaction');
+    writtenCount += chunk.filter(change => change.op === 'SET' && Boolean(change.data)).length;
+    deletedCount += chunk.filter(change => change.op === 'DELETE').length;
   }
 
   return { written: writtenCount, deleted: deletedCount };
