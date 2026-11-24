@@ -78,6 +78,28 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// Refresh shared Firestore state before operations whose correctness depends on
+// seeing changes committed by other Vercel serverless instances. This uses the
+// Admin SDK; Firestore client rules remain default-deny.
+const refreshSharedData = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    await db.refreshFromFirestore();
+    next();
+  } catch (error) {
+    console.error('[API] Authoritative Firestore refresh failed:', error);
+    if (!res.headersSent) {
+      res.status(503).json({
+        error: 'تعذر تحديث البيانات من قاعدة البيانات المشتركة. لم يتم تنفيذ العملية؛ حاول مرة أخرى بعد استقرار الاتصال.'
+      });
+    }
+  }
+};
+
+app.use('/api/auth', refreshSharedData);
+app.use('/api/admin/teachers', refreshSharedData);
+app.use('/api/students', refreshSharedData);
+app.use('/api/lessons', refreshSharedData);
+
 // Serve static assets from public folder
 app.use(express.static(path.resolve(process.cwd(), 'public')));
 
