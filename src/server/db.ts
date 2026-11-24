@@ -5,6 +5,7 @@ import {
   firestoreDb,
   migrateDataToFirestore,
   loadDatabaseFromFirestore,
+  loadFirestoreCollections,
   inspectFirestoreDatabaseState,
   commitIncrementalChangesToFirestore
 } from './firestoreMigrator.ts';
@@ -593,22 +594,18 @@ class Database {
    * Reload the authoritative shared database before cross-instance operations.
    * Flush this instance's queued writes first so a refresh cannot discard them.
    */
-  public async refreshFromFirestore(): Promise<void> {
+  public async refreshFromFirestore(collections: FirestoreCollectionName[]): Promise<void> {
     await this.waitForInitialization();
     await this.saveAndSync();
 
-    const inspection = await inspectFirestoreDatabaseState();
-    if (inspection.status !== 'FULLY_INITIALIZED' || !inspection.data) {
-      // Fail this request closed, but do not poison the warm instance after a
-      // transient read error. A later request must be allowed to retry.
-      throw new Error(
-        `Firestore refresh failed: remote state is ${inspection.status}. ${inspection.errorMessage || ''}`
-      );
+    const refreshed = await loadFirestoreCollections(collections);
+    for (const collection of collections) {
+      const value = (refreshed as any)[collection];
+      if (value === undefined) throw new Error(`Firestore refresh returned no data for ${collection}.`);
+      (this.data as any)[collection] = value;
     }
 
-    this.firestoreInspection = inspection;
-    this.data = inspection.data;
-    this.lastSnapshot = JSON.parse(JSON.stringify(inspection.data));
+    this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
     this.isFirestoreConnected = true;
     this.isSyncBlocked = false;
     this.syncBlockReason = null;
