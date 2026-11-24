@@ -597,16 +597,18 @@ class Database {
     await this.waitForInitialization();
     await this.saveAndSync();
 
-    const remoteData = await loadDatabaseFromFirestore();
-    if (!remoteData) {
-      this.isFirestoreConnected = false;
-      this.isSyncBlocked = true;
-      this.syncBlockReason = 'Firestore did not return a fully initialized authoritative dataset.';
-      throw new Error(this.syncBlockReason);
+    const inspection = await inspectFirestoreDatabaseState();
+    if (inspection.status !== 'FULLY_INITIALIZED' || !inspection.data) {
+      // Fail this request closed, but do not poison the warm instance after a
+      // transient read error. A later request must be allowed to retry.
+      throw new Error(
+        `Firestore refresh failed: remote state is ${inspection.status}. ${inspection.errorMessage || ''}`
+      );
     }
 
-    this.data = remoteData;
-    this.lastSnapshot = JSON.parse(JSON.stringify(remoteData));
+    this.firestoreInspection = inspection;
+    this.data = inspection.data;
+    this.lastSnapshot = JSON.parse(JSON.stringify(inspection.data));
     this.isFirestoreConnected = true;
     this.isSyncBlocked = false;
     this.syncBlockReason = null;
