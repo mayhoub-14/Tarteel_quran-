@@ -61,6 +61,26 @@ async function readCollection<T>(name: string): Promise<T[]> {
   return snapshot.docs.map(document => document.data() as T);
 }
 
+/** Read only the requested collections to keep request-time refreshes bounded. */
+export async function loadFirestoreCollections(
+  names: FirestoreCollectionName[]
+): Promise<Partial<DatabaseSchema>> {
+  const result: Partial<DatabaseSchema> = {};
+  for (const name of [...new Set(names)]) {
+    if (name === 'settings') {
+      const snapshot = await withFirestoreRetry(
+        () => firestoreDb.collection('settings').doc('global').get(),
+        'read settings/global'
+      );
+      if (!snapshot.exists) throw new Error('Firestore settings/global document is missing.');
+      result.settings = snapshot.data() as DatabaseSchema['settings'];
+    } else {
+      (result as any)[name] = await readCollection<any>(name);
+    }
+  }
+  return result;
+}
+
 export interface MigrationReport {
   timestamp: string;
   success: boolean;
@@ -405,7 +425,18 @@ export interface IncrementalChange {
   id: string;
   op: 'SET' | 'DELETE';
   data?: any;
+  /** Snapshot this write was based on; used to reject stale concurrent writes. */
+  expectedExists: boolean;
+  expectedData?: any;
   timestamp: number;
+}
+
+function stableFirestoreValue(value: any): string {
+  if (Array.isArray(value)) return '[' + value.map(stableFirestoreValue).join(',') + ']';
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + stableFirestoreValue(value[key])).join(',') + '}';
+  }
+  return JSON.stringify(value);
 }
 
 /**
@@ -415,31 +446,46 @@ export interface IncrementalChange {
 export async function commitIncrementalChangesToFirestore(
   changes: IncrementalChange[]
 ): Promise<{ written: number; deleted: number }> {
-  if (!changes || changes.length === 0) {
-    return { written: 0, deleted: 0 };
-  }
+  if (!changes || changes.length === 0) return { written: 0, deleted: 0 };
 
   let writtenCount = 0;
   let deletedCount = 0;
-  const chunkSize = 400; // Under Firestore's 500 max batch size
+  const chunkSize = 400;
 
   for (let i = 0; i < changes.length; i += chunkSize) {
     const chunk = changes.slice(i, i + chunkSize);
-    const batch = firestoreDb.batch();
+    await withFirestoreRetry(() => firestoreDb.runTransaction(async transaction => {
+      const refs = chunk.map(change => firestoreDb.collection(change.collection).doc(change.id));
+      // Firestore requires all transaction reads to happen before writes.
+      const snapshots = await Promise.all(refs.map(ref => transaction.get(ref)));
 
-    for (const change of chunk) {
-      const docRef = firestoreDb.collection(change.collection).doc(change.id);
-      if (change.op === 'DELETE') {
-        batch.delete(docRef);
-        deletedCount++;
-      } else if (change.op === 'SET' && change.data) {
-        const cleanData = JSON.parse(JSON.stringify(change.data));
-        batch.set(docRef, cleanData, { merge: true });
-        writtenCount++;
-      }
-    }
+      chunk.forEach((change, index) => {
+        const snapshot = snapshots[index];
+        if (change.expectedExists) {
+          if (!snapshot.exists || stableFirestoreValue(snapshot.data()) !== stableFirestoreValue(change.expectedData)) {
+            const conflict: any = new Error('Concurrent update detected for ' + change.collection + '/' + change.id + '; refusing to overwrite newer data.');
+            conflict.code = 'FAILED_PRECONDITION';
+            throw conflict;
+          }
+        } else if (snapshot.exists) {
+          const conflict: any = new Error('Concurrent create detected for ' + change.collection + '/' + change.id + '; refusing to overwrite existing data.');
+          conflict.code = 'FAILED_PRECONDITION';
+          throw conflict;
+        }
+      });
 
-    await withFirestoreRetry(() => batch.commit(), 'commit incremental Firestore batch');
+      chunk.forEach((change, index) => {
+        const ref = refs[index];
+        if (change.op === 'DELETE') {
+          transaction.delete(ref);
+        } else if (change.op === 'SET' && change.data) {
+          const cleanData = JSON.parse(JSON.stringify(change.data));
+          transaction.set(ref, cleanData);
+        }
+      });
+    }), 'commit conflict-checked Firestore transaction');
+    writtenCount += chunk.filter(change => change.op === 'SET' && Boolean(change.data)).length;
+    deletedCount += chunk.filter(change => change.op === 'DELETE').length;
   }
 
   return { written: writtenCount, deleted: deletedCount };
