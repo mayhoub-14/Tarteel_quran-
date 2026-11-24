@@ -83,7 +83,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Admin SDK; Firestore client rules remain default-deny.
 const refreshSharedData = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    await db.refreshFromFirestore();
+    await db.refreshFromFirestore(_req.path.startsWith('/api/auth') ? ['profiles'] : _req.path.startsWith('/api/admin/teachers') ? ['profiles', 'students', 'lessons'] : _req.path.startsWith('/api/students') ? ['profiles', 'students', 'lessons'] : ['profiles', 'students', 'lessons', 'lessonExceptions']);
     next();
   } catch (error) {
     console.error('[API] Authoritative Firestore refresh failed:', error);
