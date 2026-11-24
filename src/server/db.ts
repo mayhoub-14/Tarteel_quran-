@@ -779,24 +779,32 @@ class Database {
     return this.pendingChanges.size;
   }
 
-  public async reloadFromFirestore(): Promise<void> {
-    try {
-      const inspection = await inspectFirestoreDatabaseState();
-      if (inspection.status === 'FULLY_INITIALIZED' && inspection.data) {
-        this.data = inspection.data;
-        this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
-        this.isFirestoreConnected = true;
-        this.isSyncBlocked = false;
-        this.syncBlockReason = null;
-        this.pendingChanges.clear();
-        this.saveLocal();
-        console.log('[Firestore] Database safely reloaded from verified Firestore state.');
-      } else {
-        console.warn(`[Firestore Reload Prevented] Remote state is not FULLY_INITIALIZED (${inspection.status}): ${inspection.errorMessage || ''}`);
-      }
-    } catch (err) {
-      console.error('[Firestore] Error reloading from Firestore:', err);
+  /**
+   * Refresh the instance from authoritative Firestore state before critical
+   * cross-user operations. Flush pending writes first so refresh cannot discard
+   * changes this instance has not committed yet.
+   */
+  public async refreshFromFirestore(): Promise<void> {
+    await this.waitForInitialization();
+    await this.saveAndSync();
+
+    const inspection = await inspectFirestoreDatabaseState();
+    if (inspection.status !== 'FULLY_INITIALIZED' || !inspection.data) {
+      throw new Error(
+        `Firestore refresh failed: remote state is ${inspection.status}. ${inspection.errorMessage || ''}`
+      );
     }
+
+    this.data = inspection.data;
+    this.lastSnapshot = JSON.parse(JSON.stringify(this.data));
+    this.isFirestoreConnected = true;
+    this.isSyncBlocked = false;
+    this.syncBlockReason = null;
+    this.saveLocal();
+  }
+
+  public async reloadFromFirestore(): Promise<void> {
+    await this.refreshFromFirestore();
   }
 }
 
