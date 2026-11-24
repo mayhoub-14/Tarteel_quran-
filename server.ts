@@ -73,6 +73,27 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// Refresh critical shared datasets from Firestore before these routes run.
+// Vercel instances do not share memory; this prevents stale in-memory snapshots
+// from hiding changes already committed by another instance.
+const refreshSharedData = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    await db.refreshFromFirestore();
+    next();
+  } catch (error) {
+    console.error('[API] Could not refresh authoritative Firestore state:', error);
+    if (!res.headersSent) {
+      res.status(503).json({
+        error: 'تعذر تحديث البيانات من قاعدة البيانات المشتركة. لم يتم تنفيذ العملية؛ حاول مرة أخرى بعد استقرار الاتصال.'
+      });
+    }
+  }
+};
+
+app.use('/api/admin/teachers', refreshSharedData);
+app.use('/api/students', refreshSharedData);
+app.use('/api/lessons', refreshSharedData);
+
 // Serve static assets from public folder
 app.use(express.static(path.resolve(process.cwd(), 'public')));
 
@@ -633,31 +654,38 @@ app.post('/api/students', authenticate, requireApproved, (req: AuthenticatedRequ
     updatedAt: new Date().toISOString()
   };
 
-  db.get().students.push(newStudent);
 
-  // If recurring lesson schedules were provided
-  const createdLessons: Lesson[] = [];
-  if (Array.isArray(lessonSchedules)) {
-    for (const sched of lessonSchedules) {
-      if (sched.dayOfWeek !== undefined && sched.localTime) {
-        const lesson: Lesson = {
-          id: uuidv4(),
-          studentId,
-          teacherId: req.user!.id,
-          dayOfWeek: Number(sched.dayOfWeek),
-          localTime: String(sched.localTime),
-          timeZone: String(timeZone),
-          durationMinutes: duration,
-          isRecurring: true,
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        db.get().lessons.push(lesson);
-        createdLessons.push(lesson);
-      }
+  // Validate every submitted schedule before mutating any records. Do not
+  // silently create a student while dropping malformed lesson schedule entries.
+  if (lessonSchedules !== undefined && !Array.isArray(lessonSchedules)) {
+    return res.status(400).json({ error: 'صيغة مواعيد الحلقات غير صحيحة' });
+  }
+  const schedules = Array.isArray(lessonSchedules) ? lessonSchedules : [];
+  for (const sched of schedules) {
+    const day = Number(sched?.dayOfWeek);
+    const time = String(sched?.localTime || '');
+    if (!Number.isInteger(day) || day < 0 || day > 6 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+      return res.status(400).json({ error: 'يوجد موعد غير صحيح. تأكد من اختيار يوم ووقت صالح لكل حلقة.' });
     }
   }
+
+  const createdLessons: Lesson[] = schedules.map((sched: any) => ({
+    id: uuidv4(),
+    studentId,
+    teacherId: req.user!.id,
+    dayOfWeek: Number(sched.dayOfWeek),
+    localTime: String(sched.localTime),
+    timeZone: String(timeZone),
+    durationMinutes: duration,
+    isRecurring: true,
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }));
+
+  // Apply the complete student + schedule set only after validation succeeds.
+  db.get().students.push(newStudent);
+  db.get().lessons.push(...createdLessons);
 
   db.recordChange('students', newStudent.id, newStudent);
   for (const l of createdLessons) {
@@ -1738,19 +1766,25 @@ app.get('/api/admin/teachers', authenticate, requireAdmin, (_req: AuthenticatedR
   res.json({ teachers: enriched });
 });
 
-// Approve teacher registration
-app.post('/api/admin/teachers/:id/approve', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
+// Approve teacher registration. Repeated clicks return the persisted state
+// without creating duplicate approval audit entries.
+app.post('/api/admin/teachers/:id/approve', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
-  const teacher = db.get().profiles.find(p => p.id === id);
+  const teacher = db.get().profiles.find(p => p.id === id && p.role === 'TEACHER');
   if (!teacher) return res.status(404).json({ error: 'المعلم غير موجود' });
 
-  teacher.status = 'ACTIVE';
-  teacher.updatedAt = new Date().toISOString();
-  db.save();
+  if (teacher.status !== 'ACTIVE') {
+    teacher.status = 'ACTIVE';
+    teacher.updatedAt = new Date().toISOString();
+    db.recordChange('profiles', teacher.id, teacher);
+    logAudit(req.user!, 'APPROVE_TEACHER', 'USER', teacher.id, `تم اعتماد وتفعيل حساب المعلم: ${teacher.fullName} (${teacher.username})`);
+  }
 
-  logAudit(req.user!, 'APPROVE_TEACHER', 'USER', teacher.id, `تم اعتماد وتفعيل حساب المعلم: ${teacher.fullName} (${teacher.username})`);
-
-  res.json({ message: `تم اعتماد وتفعيل حساب المعلم ${teacher.fullName} بنجاح` });
+  await db.saveAndSync();
+  return res.json({
+    status: teacher.status,
+    message: `تم اعتماد وتفعيل حساب المعلم ${teacher.fullName} بنجاح`
+  });
 });
 
 // Reject teacher registration
