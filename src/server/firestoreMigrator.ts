@@ -61,6 +61,26 @@ async function readCollection<T>(name: string): Promise<T[]> {
   return snapshot.docs.map(document => document.data() as T);
 }
 
+/** Read only the requested collections to keep request-time refreshes bounded. */
+export async function loadFirestoreCollections(
+  names: FirestoreCollectionName[]
+): Promise<Partial<DatabaseSchema>> {
+  const result: Partial<DatabaseSchema> = {};
+  for (const name of [...new Set(names)]) {
+    if (name === 'settings') {
+      const snapshot = await withFirestoreRetry(
+        () => firestoreDb.collection('settings').doc('global').get(),
+        'read settings/global'
+      );
+      if (!snapshot.exists) throw new Error('Firestore settings/global document is missing.');
+      result.settings = snapshot.data() as DatabaseSchema['settings'];
+    } else {
+      (result as any)[name] = await readCollection<any>(name);
+    }
+  }
+  return result;
+}
+
 export interface MigrationReport {
   timestamp: string;
   success: boolean;
