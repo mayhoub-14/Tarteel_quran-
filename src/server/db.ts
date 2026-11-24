@@ -589,6 +589,30 @@ class Database {
     }
   }
 
+  /**
+   * Reload the authoritative shared database before cross-instance operations.
+   * Flush this instance's queued writes first so a refresh cannot discard them.
+   */
+  public async refreshFromFirestore(): Promise<void> {
+    await this.waitForInitialization();
+    await this.saveAndSync();
+
+    const remoteData = await loadDatabaseFromFirestore();
+    if (!remoteData) {
+      this.isFirestoreConnected = false;
+      this.isSyncBlocked = true;
+      this.syncBlockReason = 'Firestore did not return a fully initialized authoritative dataset.';
+      throw new Error(this.syncBlockReason);
+    }
+
+    this.data = remoteData;
+    this.lastSnapshot = JSON.parse(JSON.stringify(remoteData));
+    this.isFirestoreConnected = true;
+    this.isSyncBlocked = false;
+    this.syncBlockReason = null;
+    this.saveLocal();
+  }
+
   public get(): DatabaseSchema {
     return this.data;
   }
