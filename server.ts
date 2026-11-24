@@ -90,6 +90,7 @@ const refreshSharedData = async (_req: Request, res: Response, next: NextFunctio
   }
 };
 
+app.use('/api/auth', refreshSharedData);
 app.use('/api/admin/teachers', refreshSharedData);
 app.use('/api/students', refreshSharedData);
 app.use('/api/lessons', refreshSharedData);
